@@ -1,0 +1,162 @@
+// Datos del menú — por ahora son estáticos para desarrollo.
+// En producción vendrán de la API según el comercio_id.
+
+export const CATEGORIAS = [
+  { id: "cat-1", nombre: "🍹 Tragos", orden: 1 },
+  { id: "cat-2", nombre: "🍺 Cervezas", orden: 2 },
+  { id: "cat-3", nombre: "🥤 Sin Alcohol", orden: 3 },
+  { id: "cat-4", nombre: "🍟 Picoteo", orden: 4 },
+  { id: "cat-5", nombre: "🍔 Sándwiches", orden: 5 },
+];
+
+export const ITEMS_MENU = [
+  // ── Tragos ──────────────────────────────────────────────
+  {
+    id: "item-1",
+    categoria_id: "cat-1",
+    nombre: "Pisco Sour",
+    descripcion: "Pisco, limón, clara de huevo y amargo de angostura.",
+    precio: 4500,
+    imagen: "🍋",
+    disponible: true,
+    tiempo_preparacion_min: 5,
+  },
+  {
+    id: "item-2",
+    categoria_id: "cat-1",
+    nombre: "Mojito",
+    descripcion: "Ron blanco, menta fresca, limón, azúcar y soda.",
+    precio: 5200,
+    imagen: "🌿",
+    disponible: true,
+    tiempo_preparacion_min: 6,
+  },
+  {
+    id: "item-3",
+    categoria_id: "cat-1",
+    nombre: "Aperol Spritz",
+    descripcion: "Aperol, prosecco, soda y naranja.",
+    precio: 5800,
+    imagen: "🍊",
+    disponible: true,
+    tiempo_preparacion_min: 4,
+  },
+  {
+    id: "item-4",
+    categoria_id: "cat-1",
+    nombre: "Gin Tonic",
+    descripcion: "Gin premium, tónica artesanal y pepino.",
+    precio: 6000,
+    imagen: "🫧",
+    disponible: false,
+    tiempo_preparacion_min: 4,
+  },
+
+  // ── Cervezas ─────────────────────────────────────────────
+  {
+    id: "item-5",
+    categoria_id: "cat-2",
+    nombre: "Cerveza Artesanal IPA",
+    descripcion: "Lúpulo intenso, notas cítricas. 500ml.",
+    precio: 4200,
+    imagen: "🍺",
+    disponible: true,
+    tiempo_preparacion_min: 2,
+  },
+  {
+    id: "item-6",
+    categoria_id: "cat-2",
+    nombre: "Cerveza Rubia",
+    descripcion: "Suave y refrescante. 500ml.",
+    precio: 3500,
+    imagen: "🍺",
+    disponible: true,
+    tiempo_preparacion_min: 2,
+  },
+  {
+    id: "item-7",
+    categoria_id: "cat-2",
+    nombre: "Cerveza Negra",
+    descripcion: "Tostada con notas de caramelo. 500ml.",
+    precio: 4000,
+    imagen: "🍺",
+    disponible: true,
+    tiempo_preparacion_min: 2,
+  },
+
+  // ── Sin Alcohol ───────────────────────────────────────────
+  {
+    id: "item-8",
+    categoria_id: "cat-3",
+    nombre: "Limonada Natural",
+    descripcion: "Limón fresco, azúcar y menta. 500ml.",
+    precio: 2800,
+    imagen: "🍋",
+    disponible: true,
+    tiempo_preparacion_min: 3,
+  },
+  {
+    id: "item-9",
+    categoria_id: "cat-3",
+    nombre: "Agua Mineral",
+    descripcion: "Con o sin gas. 500ml.",
+    precio: 1000,
+    imagen: "💧",
+    disponible: true,
+    tiempo_preparacion_min: 1,
+  },
+
+  // ── Picoteo ──────────────────────────────────────────────
+  {
+    id: "item-10",
+    categoria_id: "cat-4",
+    nombre: "Papas Fritas",
+    descripcion: "Crujientes con sal, acompañadas de alioli.",
+    precio: 3500,
+    imagen: "🍟",
+    disponible: true,
+    tiempo_preparacion_min: 10,
+  },
+  {
+    id: "item-11",
+    categoria_id: "cat-4",
+    nombre: "Tabla de Quesos",
+    descripcion: "Selección de quesos, frutos secos y mermelada.",
+    precio: 7500,
+    imagen: "🧀",
+    disponible: true,
+    tiempo_preparacion_min: 8,
+  },
+  {
+    id: "item-12",
+    categoria_id: "cat-4",
+    nombre: "Alitas BBQ",
+    descripcion: "6 alitas marinadas en salsa BBQ ahumada.",
+    precio: 6500,
+    imagen: "🍗",
+    disponible: true,
+    tiempo_preparacion_min: 15,
+  },
+
+  // ── Sándwiches ───────────────────────────────────────────
+  {
+    id: "item-13",
+    categoria_id: "cat-5",
+    nombre: "Churrasco Italiano",
+    descripcion: "Carne a la plancha, palta, tomate y mayo.",
+    precio: 6800,
+    imagen: "🥩",
+    disponible: true,
+    tiempo_preparacion_min: 12,
+  },
+  {
+    id: "item-14",
+    categoria_id: "cat-5",
+    nombre: "Veggie Burger",
+    descripcion: "Medallón de garbanzos, lechuga, tomate y hummus.",
+    precio: 6200,
+    imagen: "🌱",
+    disponible: true,
+    tiempo_preparacion_min: 12,
+  },
+];

@@ -256,7 +256,7 @@
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(12, 12, 12, 0.3);
+  border: 2px solid rgb(245, 76, 76);
   border-top-color: var(--color-bg);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -265,7 +265,7 @@
 /* ── Nota al pie ──────────────────────────────────────────── */
 .nota {
   text-align: center;
-  color: var(--color-border-2);
+  color: rgb(255, 255, 255);
   font-size: 0.7rem;
   margin-top: 1.25rem;
   line-height: 1.5;

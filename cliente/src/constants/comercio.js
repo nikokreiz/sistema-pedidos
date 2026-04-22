@@ -4,10 +4,10 @@
 
 export const COMERCIO = {
   id: "comercio-001",
-  nombre: "La Barra del Puerto",
+  nombre: "La Barra del Pueblo",
   slogan: "Buena música · Buenos tragos · Mejor compañía",
   logo: "🍹",
-  colorPrimario: "#E8C547",
+  colorPrimario: "#4ce847",
   colorSecundario: "#C9A227",
   horario: "Lun–Vie 18:00–02:00 · Sáb–Dom 17:00–03:00",
 };
