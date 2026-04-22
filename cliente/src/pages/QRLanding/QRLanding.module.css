@@ -1,0 +1,318 @@
+/* ── Layout principal ─────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Glows decorativos de fondo ───────────────────────────── */
+.glowTop {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(80px);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  top: -80px;
+  right: -80px;
+  pointer-events: none;
+}
+
+.glowBottom {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  filter: blur(80px);
+  background: rgba(139, 92, 246, 0.1);
+  bottom: -60px;
+  left: -60px;
+  pointer-events: none;
+}
+
+/* ── Tarjeta central ──────────────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem 2rem;
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Sección de bienvenida ────────────────────────────────── */
+.logoWrap {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.nombre {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--color-text);
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+.slogan {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* ── Tags de info ─────────────────────────────────────────── */
+.tagsWrap {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tagInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Divisor ──────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.dividerText {
+  color: var(--color-text-dim);
+  font-size: 0.75rem;
+}
+
+/* ── Descripción ──────────────────────────────────────────── */
+.descripcion {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Sección ingresar mesa ────────────────────────────────── */
+.volverBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.15s;
+}
+.volverBtn:hover { color: var(--color-text); }
+
+.titulo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin-bottom: 0.4rem;
+}
+
+.subtitulo {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Input número de mesa ─────────────────────────────────── */
+.inputMesa {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border-2);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -moz-appearance: textfield;
+  letter-spacing: 0.1em;
+}
+.inputMesa::-webkit-inner-spin-button,
+.inputMesa::-webkit-outer-spin-button { -webkit-appearance: none; }
+.inputMesa:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+.inputMesa::placeholder { color: var(--color-text-dim); }
+
+/* ── Mensaje de error ─────────────────────────────────────── */
+.error {
+  color: var(--color-error);
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* ── Grid de mesas ────────────────────────────────────────── */
+.mesasLabel {
+  color: var(--color-text-dim);
+  font-size: 0.72rem;
+  margin-bottom: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.mesaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.mesaChip {
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  font-family: var(--font-body);
+}
+.mesaChip:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+  color: var(--color-primary);
+}
+.mesaChipSelected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ── Botones ──────────────────────────────────────────────── */
+.btnGroup {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btnPrimary:hover:not(:disabled) {
+  background: var(--color-primary-2);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+.btnPrimary:active:not(:disabled) { transform: translateY(0); }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Spinner ──────────────────────────────────────────────── */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(12, 12, 12, 0.3);
+  border-top-color: var(--color-bg);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Nota al pie ──────────────────────────────────────────── */
+.nota {
+  text-align: center;
+  color: var(--color-border-2);
+  font-size: 0.7rem;
+  margin-top: 1.25rem;
+  line-height: 1.5;
+}
+
+/* ── Pantalla de éxito ────────────────────────────────────── */
+.exitoWrap {
+  text-align: center;
+}
+
+.checkCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-size: 2rem;
+  color: var(--color-primary);
+}
+
+.exitoTitulo {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.exitoDesc {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.spinnerCentrado {
+  display: flex;
+  justify-content: center;
+}
+
+.spinnerPrimary {
+  width: 24px;
+  height: 24px;
+  border: 2px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

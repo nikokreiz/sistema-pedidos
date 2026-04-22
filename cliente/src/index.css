@@ -1,0 +1,92 @@
+/* ── Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap');
+
+/* ── Variables globales ───────────────────────────────────── */
+:root {
+  --color-bg:         #0C0C0C;
+  --color-surface:    #141414;
+  --color-surface-2:  #1A1A1A;
+  --color-border:     #242424;
+  --color-border-2:   #2A2A2A;
+  --color-text:       #F5F5F5;
+  --color-text-muted: #555555;
+  --color-text-dim:   #333333;
+  --color-primary:    #E8C547;
+  --color-primary-2:  #C9A227;
+  --color-error:      #EF4444;
+  --color-success:    #10B981;
+
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  24px;
+  --radius-full: 999px;
+
+  --font-body:    'DM Sans', sans-serif;
+  --font-display: 'Playfair Display', serif;
+
+  --shadow-card: 0 32px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Reset ────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+input, textarea {
+  font-family: var(--font-body);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 2px; }
+
+/* ── Animaciones globales ─────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.fade-up   { animation: fadeUp 0.4s ease forwards; }
+.check-pop { animation: checkPop 0.5s ease forwards; }
