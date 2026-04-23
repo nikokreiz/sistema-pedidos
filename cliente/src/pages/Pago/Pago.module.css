@@ -1,0 +1,363 @@
+/* ── Layout ───────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.btnVolver {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.15s;
+  padding: 0;
+  font-family: var(--font-body);
+}
+.btnVolver:hover { color: var(--color-text); }
+
+.headerTitulo {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-text);
+  flex: 1;
+}
+
+.headerMesa {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* ── Contenido ────────────────────────────────────────────── */
+.contenido {
+  padding: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Sección ──────────────────────────────────────────────── */
+.seccion {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.seccionHeader {
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Resumen compacto del pedido ──────────────────────────── */
+.resumenItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.83rem;
+}
+.resumenItem:last-child { border-bottom: none; }
+
+.resumenItemNombre {
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resumenItemCant {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0.1rem 0.45rem;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+.resumenItemPrecio {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+/* ── Total destacado ──────────────────────────────────────── */
+.totalDestacado {
+  padding: 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.totalDestacadoLabel {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.totalDestacadoValor {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── Vista de pago online ─────────────────────────────────── */
+.pagoOnlineWrap {
+  padding: 1.5rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inputGrupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.inputLabel {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.input {
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border-2);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: var(--font-body);
+  width: 100%;
+}
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+.input::placeholder { color: var(--color-text-dim); }
+
+.inputRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.metodosPago {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.metodoPagoChip {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border-2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+.metodoPagoChip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.metodoPagoChipActivo {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ── Vista efectivo / garzón ──────────────────────────────── */
+.estadoWrap {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.estadoIcono {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.estadoTitulo {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-text);
+}
+
+.estadoDesc {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.estadoBadge {
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.badgeEfectivo {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-primary);
+}
+
+.badgeGarzon {
+  background: color-mix(in srgb, #8B5CF6 15%, transparent);
+  border: 1px solid color-mix(in srgb, #8B5CF6 30%, transparent);
+  color: #A78BFA;
+}
+
+/* ── Botón confirmar ──────────────────────────────────────── */
+.btnConfirmar {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+}
+.btnConfirmar:hover:not(:disabled) {
+  background: var(--color-primary-2);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+.btnConfirmar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Spinner ──────────────────────────────────────────────── */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(12, 12, 12, 0.3);
+  border-top-color: var(--color-bg);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Pantalla de éxito ────────────────────────────────────── */
+.exitoPage {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.exitoCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.exitoIcono {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-success) 40%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  margin: 0 auto 1.5rem;
+}
+
+.exitoTitulo {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.exitoDesc {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.exitoDetalle {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.exitoDetalleRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.exitoDetalleLabel { color: var(--color-text-muted); }
+.exitoDetalleValor { color: var(--color-text); font-weight: 500; }
+.exitoDetalleTotal { color: var(--color-primary); font-weight: 700; }
+
+.exitoNota {
+  color: var(--color-text-dim);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
