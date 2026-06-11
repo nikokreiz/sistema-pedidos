@@ -1,52 +1,106 @@
-import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Menu.module.css";
 import ItemCard from "../../components/ui/ItemCard/ItemCard";
 import { COMERCIO } from "../../constants/comercio";
-import { CATEGORIAS, ITEMS_MENU } from "../../constants/menu";
+import { menuService } from "../../services/menuService";
+import { getEmoji } from "../../constants/emojiMap"; 
 
-// Formatea precio en pesos chilenos
 const formatPrecio = (precio) =>
   precio.toLocaleString("es-CL", { style: "currency", currency: "CLP" });
 
 export default function Menu() {
-  const { mesaId } = useParams();
-  const navigate   = useNavigate();
+  const { mesaId }   = useParams();
+  const location     = useLocation();
+  const navigate     = useNavigate();
 
-  const [categoriaActiva, setCategoriaActiva] = useState(CATEGORIAS[0].id);
-  const [pedido, setPedido] = useState({}); // { item_id: cantidad }
+  // Datos reales de la mesa que vienen desde QRLanding
+  const { comercioId = null } = location.state || {};
 
-  // ── Items filtrados por categoría activa ────────────────────────────────────
+  const [categorias, setCategorias]       = useState([]);
+  const [items, setItems]                 = useState([]);
+  const [categoriaActiva, setCategoriaActiva] = useState(null);
+  const [pedido, setPedido]               = useState({});
+  const [cargando, setCargando]           = useState(true);
+  const [error, setError]                 = useState("");
+
+  // ── Carga el menú real desde el backend ────────────────────────────────────
+  useEffect(() => {
+    const cargarMenu = async () => {
+      try {
+        setCargando(true);
+
+        // ID del comercio — viene del state de navegación
+        // En desarrollo usamos el ID fijo que insertamos en la BD
+        const id = comercioId || "a1b2c3d4-0000-0000-0000-000000000001";
+        const data = await menuService.getMenu(id);
+
+        setCategorias(data.categorias);
+        setItems(data.items);
+
+        if (data.categorias.length > 0) {
+          setCategoriaActiva(data.categorias[0].id);
+        }
+      } catch (err) {
+        setError("No se pudo cargar el menú. Intenta de nuevo.");
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarMenu();
+  }, [comercioId]);
+
+  // ── Items filtrados por categoría ───────────────────────────────────────────
   const itemsFiltrados = useMemo(
-    () => ITEMS_MENU.filter((i) => i.categoria_id === categoriaActiva),
-    [categoriaActiva]
+    () => items.filter((i) => i.categoria_id === categoriaActiva),
+    [items, categoriaActiva]
   );
 
   // ── Manejo del pedido ───────────────────────────────────────────────────────
-  const agregarItem = (item) => {
+  const agregarItem = (item) =>
     setPedido((prev) => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }));
-  };
 
-  const quitarItem = (item) => {
+  const quitarItem = (item) =>
     setPedido((prev) => {
       const nueva = { ...prev };
       if (nueva[item.id] <= 1) delete nueva[item.id];
       else nueva[item.id] -= 1;
       return nueva;
     });
-  };
 
-  // ── Totales del carrito ─────────────────────────────────────────────────────
+  // ── Totales ─────────────────────────────────────────────────────────────────
   const totalItems = Object.values(pedido).reduce((a, b) => a + b, 0);
   const totalPrecio = Object.entries(pedido).reduce((acc, [id, cant]) => {
-    const item = ITEMS_MENU.find((i) => i.id === id);
+    const item = items.find((i) => i.id === id);
     return acc + (item ? item.precio * cant : 0);
   }, 0);
 
-  const irAlResumen = () => {
-    // Pasamos el pedido y el número de mesa al resumen vía state de navegación
+  const irAlResumen = () =>
     navigate("/resumen", { state: { pedido, mesaId } });
-  };
+
+  // ── Estados de carga y error ────────────────────────────────────────────────
+  if (cargando) {
+    return (
+      <div className={styles.page} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className={styles.vacio}>
+          <div className={styles.vacioIcon}>⏳</div>
+          <p>Cargando menú...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.page} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className={styles.vacio}>
+          <div className={styles.vacioIcon}>❌</div>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -64,9 +118,8 @@ export default function Menu() {
           <span className={styles.headerBadge}>Abierto</span>
         </div>
 
-        {/* ── Tabs de categorías ── */}
         <div className={styles.tabs}>
-          {CATEGORIAS.map((cat) => (
+          {categorias.map((cat) => (
             <button
               key={cat.id}
               className={`${styles.tab} ${categoriaActiva === cat.id ? styles.tabActivo : ""}`}
@@ -81,7 +134,7 @@ export default function Menu() {
       {/* ── Lista de items ── */}
       <div className={styles.contenido}>
         <h2 className={styles.seccionTitulo}>
-          {CATEGORIAS.find((c) => c.id === categoriaActiva)?.nombre}
+          {categorias.find((c) => c.id === categoriaActiva)?.nombre}
         </h2>
 
         {itemsFiltrados.length > 0 ? (
@@ -89,7 +142,7 @@ export default function Menu() {
             {itemsFiltrados.map((item) => (
               <ItemCard
                 key={item.id}
-                item={item}
+                item={{ ...item, imagen: getEmoji(item.imagen_url) }}
                 cantidad={pedido[item.id] || 0}
                 onAgregar={agregarItem}
                 onQuitar={quitarItem}
