@@ -36,8 +36,8 @@ export default function ResumenPedido() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  // Recibimos el pedido y mesaId desde Menu.jsx via navigate state
-  const { pedido: pedidoInicial = {}, mesaId = "?" } = location.state || {};
+  const { pedido: pedidoInicial = {}, mesaId = "?", items: itemsMenu = [] } = location.state || {};
+
 
   const [pedido, setPedido] = useState(pedidoInicial);
   const [nota, setNota]     = useState("");
@@ -45,7 +45,7 @@ export default function ResumenPedido() {
   // ── Items con detalle ───────────────────────────────────────────────────────
   const itemsConDetalle = Object.entries(pedido)
     .map(([id, cantidad]) => {
-      const item = ITEMS_MENU.find((i) => i.id === id);
+      const item = itemsMenu.find((i) => i.id === id);
       return item ? { ...item, cantidad } : null;
     })
     .filter(Boolean);
@@ -72,10 +72,10 @@ export default function ResumenPedido() {
 
   // ── Confirmar pedido ────────────────────────────────────────────────────────
   const confirmarPedido = (metodoPago) => {
-    navigate("/pago", {
-      state: { pedido, mesaId, metodoPago, nota, total },
-    });
-  };
+  navigate("/pago", {
+    state: { pedido, mesaId, metodoPago, nota, total, items: itemsMenu },
+  });
+};
 
   // ── Carrito vacío ───────────────────────────────────────────────────────────
   if (itemsConDetalle.length === 0) {

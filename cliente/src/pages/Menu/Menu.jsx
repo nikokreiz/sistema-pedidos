@@ -77,7 +77,7 @@ export default function Menu() {
   }, 0);
 
   const irAlResumen = () =>
-    navigate("/resumen", { state: { pedido, mesaId } });
+  navigate("/resumen", { state: { pedido, mesaId, items } });
 
   // ── Estados de carga y error ────────────────────────────────────────────────
   if (cargando) {

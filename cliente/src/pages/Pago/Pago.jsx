@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./Pago.module.css";
-import { ITEMS_MENU } from "../../constants/menu";
+import { pedidosService } from "../../services/pedidosService";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatPrecio = (precio) =>
   precio.toLocaleString("es-CL", { style: "currency", currency: "CLP" });
 
-// ─── Subcomponente: resumen compacto del pedido ───────────────────────────────
-function ResumenCompacto({ pedido, total }) {
-  const items = Object.entries(pedido)
+function ResumenCompacto({ pedido, items, total }) {
+  const itemsDetalle = Object.entries(pedido)
     .map(([id, cantidad]) => {
-      const item = ITEMS_MENU.find((i) => i.id === id);
+      const item = items.find((i) => i.id === id);
       return item ? { ...item, cantidad } : null;
     })
     .filter(Boolean);
@@ -19,8 +17,7 @@ function ResumenCompacto({ pedido, total }) {
   return (
     <div className={styles.seccion}>
       <div className={styles.seccionHeader}>Resumen</div>
-
-      {items.map((item) => (
+      {itemsDetalle.map((item) => (
         <div key={item.id} className={styles.resumenItem}>
           <span className={styles.resumenItemNombre}>
             <span className={styles.resumenItemCant}>x{item.cantidad}</span>
@@ -31,7 +28,6 @@ function ResumenCompacto({ pedido, total }) {
           </span>
         </div>
       ))}
-
       <div className={styles.totalDestacado}>
         <span className={styles.totalDestacadoLabel}>Total a pagar</span>
         <span className={styles.totalDestacadoValor}>{formatPrecio(total)}</span>
@@ -40,7 +36,6 @@ function ResumenCompacto({ pedido, total }) {
   );
 }
 
-// ─── Subcomponente: formulario de pago online ─────────────────────────────────
 function FormularioPagoOnline({ total, onConfirmar, procesando }) {
   const [subMetodo, setSubMetodo]   = useState("debito");
   const [numeroTarjeta, setNumero]  = useState("");
@@ -49,22 +44,15 @@ function FormularioPagoOnline({ total, onConfirmar, procesando }) {
   const [nombre, setNombre]         = useState("");
 
   const SUB_METODOS = [
-    { id: "debito",   label: "Débito" },
-    { id: "credito",  label: "Crédito" },
-    { id: "webpay",   label: "Webpay" },
+    { id: "debito",  label: "Debito" },
+    { id: "credito", label: "Credito" },
+    { id: "webpay",  label: "Webpay" },
   ];
-
-  const handlePagar = () => {
-    // Aquí irá la integración real con Transbank / Webpay
-    onConfirmar({ subMetodo, numeroTarjeta });
-  };
 
   return (
     <div className={styles.seccion}>
       <div className={styles.seccionHeader}>Datos de pago</div>
       <div className={styles.pagoOnlineWrap}>
-
-        {/* Selector de sub-método */}
         <div className={styles.metodosPago}>
           {SUB_METODOS.map((m) => (
             <button
@@ -76,10 +64,8 @@ function FormularioPagoOnline({ total, onConfirmar, procesando }) {
             </button>
           ))}
         </div>
-
-        {/* Número de tarjeta */}
         <div className={styles.inputGrupo}>
-          <label className={styles.inputLabel}>Número de tarjeta</label>
+          <label className={styles.inputLabel}>Numero de tarjeta</label>
           <input
             className={styles.input}
             type="text"
@@ -92,8 +78,6 @@ function FormularioPagoOnline({ total, onConfirmar, procesando }) {
             }}
           />
         </div>
-
-        {/* Nombre */}
         <div className={styles.inputGrupo}>
           <label className={styles.inputLabel}>Nombre en la tarjeta</label>
           <input
@@ -104,11 +88,9 @@ function FormularioPagoOnline({ total, onConfirmar, procesando }) {
             onChange={(e) => setNombre(e.target.value.toUpperCase())}
           />
         </div>
-
-        {/* Expiración y CVV */}
         <div className={styles.inputRow}>
           <div className={styles.inputGrupo}>
-            <label className={styles.inputLabel}>Expiración</label>
+            <label className={styles.inputLabel}>Expiracion</label>
             <input
               className={styles.input}
               type="text"
@@ -133,51 +115,39 @@ function FormularioPagoOnline({ total, onConfirmar, procesando }) {
             />
           </div>
         </div>
-
-        {/* Botón pagar */}
         <button
           className={styles.btnConfirmar}
-          onClick={handlePagar}
+          onClick={onConfirmar}
           disabled={procesando || !numeroTarjeta || !nombre || !expiracion || !cvv}
         >
           {procesando
             ? <><div className={styles.spinner} /> Procesando...</>
-            : <>Pagar {formatPrecio(total)} →</>
+            : <>Pagar {formatPrecio(total)} de verdad</>
           }
         </button>
-
       </div>
     </div>
   );
 }
 
-// ─── Pantalla de éxito ────────────────────────────────────────────────────────
-function PantallaExito({ metodoPago, mesaId, total, navigate }) {
+function PantallaExito({ metodoPago, mesaId, total }) {
   const MENSAJES = {
-    online:   { icono: "✅", titulo: "¡Pago exitoso!", desc: "Tu pago fue procesado correctamente. ¡Disfruta tu pedido!" },
-    efectivo: { icono: "💵", titulo: "¡Pedido confirmado!", desc: "Un garzón pasará pronto a cobrarte en efectivo." },
-    garzon:   { icono: "🙋", titulo: "¡En camino!", desc: "Un garzón se dirigirá a tu mesa en breve para atenderte." },
+    online:   { icono: "OK", titulo: "Pago exitoso!",      desc: "Tu pago fue procesado. Disfruta tu pedido!" },
+    efectivo: { icono: "$$", titulo: "Pedido confirmado!", desc: "Un garzon pasara pronto a cobrarte en efectivo." },
+    garzon:   { icono: "!!", titulo: "En camino!",          desc: "Un garzon se dirigira a tu mesa en breve." },
   };
-
   const msg = MENSAJES[metodoPago] || MENSAJES.online;
 
   return (
     <div className={`${styles.exitoPage} fade-up`}>
       <div className={styles.exitoCard}>
-        <div className={`${styles.exitoIcono} check-pop`}>{msg.icono}</div>
+        <div className={styles.exitoIcono}>{msg.icono}</div>
         <h2 className={styles.exitoTitulo}>{msg.titulo}</h2>
         <p className={styles.exitoDesc}>{msg.desc}</p>
-
         <div className={styles.exitoDetalle}>
           <div className={styles.exitoDetalleRow}>
             <span className={styles.exitoDetalleLabel}>Mesa</span>
             <span className={styles.exitoDetalleValor}>#{mesaId}</span>
-          </div>
-          <div className={styles.exitoDetalleRow}>
-            <span className={styles.exitoDetalleLabel}>Método de pago</span>
-            <span className={styles.exitoDetalleValor}>
-              {{ online: "Online", efectivo: "Efectivo", garzon: "Asistencia" }[metodoPago]}
-            </span>
           </div>
           {metodoPago === "online" && (
             <div className={styles.exitoDetalleRow}>
@@ -186,17 +156,12 @@ function PantallaExito({ metodoPago, mesaId, total, navigate }) {
             </div>
           )}
         </div>
-
-        <p className={styles.exitoNota}>
-          Puedes seguir pidiendo desde el menú si lo deseas.{"\n"}
-          ¡Gracias por tu preferencia! 🍹
-        </p>
+        <p className={styles.exitoNota}>Gracias por tu preferencia!</p>
       </div>
     </div>
   );
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
 export default function Pago() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -207,52 +172,56 @@ export default function Pago() {
     metodoPago = "online",
     nota       = "",
     total      = 0,
+    items      = [],
   } = location.state || {};
 
   const [procesando, setProcesando] = useState(false);
   const [exitoso, setExitoso]       = useState(false);
+  const [error, setError]           = useState("");
 
-  const confirmarPedido = () => {
+  const confirmarPedido = async () => {
     setProcesando(true);
-    // Aquí irá la llamada real al backend para registrar el pedido
-    setTimeout(() => {
-      setProcesando(false);
+    setError("");
+
+    try {
+      await pedidosService.crearPedido({
+        mesaNumero: parseInt(mesaId),
+        items,
+        pedido,
+        metodoPago,
+        nota,
+      });
       setExitoso(true);
-    }, 2000);
+    } catch (err) {
+      setError("No se pudo enviar el pedido. Intenta de nuevo.");
+    } finally {
+      setProcesando(false);
+    }
   };
 
-  // ── Pantalla éxito ──────────────────────────────────────────────────────────
   if (exitoso) {
-    return (
-      <PantallaExito
-        metodoPago={metodoPago}
-        mesaId={mesaId}
-        total={total}
-        navigate={navigate}
-      />
-    );
+    return <PantallaExito metodoPago={metodoPago} mesaId={mesaId} total={total} />;
   }
 
   return (
     <div className={styles.page}>
-
-      {/* ── Header ── */}
       <div className={styles.header}>
         <button className={styles.btnVolver} onClick={() => navigate(-1)}>
-          ← Volver
+          Volver
         </button>
         <h1 className={styles.headerTitulo}>Confirmar pedido</h1>
         <span className={styles.headerMesa}>Mesa #{mesaId}</span>
       </div>
 
       <div className={styles.contenido}>
+        <ResumenCompacto pedido={pedido} items={items} total={total} />
 
-        {/* ── Resumen compacto ── */}
-        <ResumenCompacto pedido={pedido} total={total} />
+        {error && (
+          <p style={{ color: "var(--color-error)", textAlign: "center", fontSize: "0.85rem" }}>
+            {error}
+          </p>
+        )}
 
-        {/* ── Vista según método de pago ── */}
-
-        {/* ONLINE: formulario de tarjeta */}
         {metodoPago === "online" && (
           <FormularioPagoOnline
             total={total}
@@ -261,60 +230,44 @@ export default function Pago() {
           />
         )}
 
-        {/* EFECTIVO: confirmación simple */}
         {metodoPago === "efectivo" && (
           <div className={styles.seccion}>
             <div className={styles.estadoWrap}>
-              <div className={styles.estadoIcono}>💵</div>
+              <div className={styles.estadoIcono}>$$</div>
               <h2 className={styles.estadoTitulo}>Pago en efectivo</h2>
               <p className={styles.estadoDesc}>
-                Al confirmar tu pedido, un garzón pasará a cobrarte a la mesa.
-                Ten listo <strong>{formatPrecio(total)}</strong>.
+                Al confirmar, un garzon pasara a cobrarte.
+                Ten listo {formatPrecio(total)}.
               </p>
-              <span className={`${styles.estadoBadge} ${styles.badgeEfectivo}`}>
-                Total: {formatPrecio(total)}
-              </span>
               <button
                 className={styles.btnConfirmar}
                 onClick={confirmarPedido}
                 disabled={procesando}
               >
-                {procesando
-                  ? <><div className={styles.spinner} /> Enviando pedido...</>
-                  : "Confirmar pedido →"
-                }
+                {procesando ? "Enviando..." : "Confirmar pedido"}
               </button>
             </div>
           </div>
         )}
 
-        {/* GARZÓN: solicitud de ayuda */}
         {metodoPago === "garzon" && (
           <div className={styles.seccion}>
             <div className={styles.estadoWrap}>
-              <div className={styles.estadoIcono}>🙋</div>
-              <h2 className={styles.estadoTitulo}>Solicitar garzón</h2>
+              <div className={styles.estadoIcono}>!!</div>
+              <h2 className={styles.estadoTitulo}>Solicitar garzon</h2>
               <p className={styles.estadoDesc}>
-                Un garzón se acercará a tu mesa para tomar tu pedido
-                y resolver cualquier consulta que tengas.
+                Un garzon se acercara a tu mesa para atenderte.
               </p>
-              <span className={`${styles.estadoBadge} ${styles.badgeGarzon}`}>
-                Mesa #{mesaId} · Asistencia solicitada
-              </span>
               <button
                 className={styles.btnConfirmar}
                 onClick={confirmarPedido}
                 disabled={procesando}
               >
-                {procesando
-                  ? <><div className={styles.spinner} /> Enviando solicitud...</>
-                  : "Llamar garzón →"
-                }
+                {procesando ? "Enviando..." : "Llamar garzon"}
               </button>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
