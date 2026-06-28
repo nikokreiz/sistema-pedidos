@@ -277,6 +277,90 @@
 }
 .btnConfirmar:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.boletaBox {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.boletaLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.inputCorreo {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-2);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+}
+
+.boletaAcciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.btnBoleta,
+.btnBoletaPrimario {
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btnBoleta {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.btnBoletaPrimario {
+  background: var(--color-primary);
+  color: var(--color-bg);
+  border-color: var(--color-primary);
+}
+
+.btnBoleta:hover,
+.btnBoletaPrimario:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btnBoletaPrimario:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btnInicio {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s;
+  font-family: var(--font-body);
+}
+.btnInicio:hover {
+  background: var(--color-surface-2);
+  transform: translateY(-1px);
+}
+
 /* ── Spinner ──────────────────────────────────────────────── */
 .spinner {
   width: 18px;

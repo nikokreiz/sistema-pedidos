@@ -12,7 +12,9 @@ const pedidosRoutes = require("./routes/pedidos");
 const app = express();
 
 // ── Middlewares globales ───────────────────────────────────
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:5174"],
+}));
 app.use(express.json());
 
 // ── Health check ───────────────────────────────────────────

@@ -8,5 +8,6 @@ const pedidosController = require("../controllers/pedidosController");
 router.post("/",                    pedidosController.crearPedido);
 router.get("/mesa/:mesaId",         pedidosController.getPedidosMesa);
 router.put("/:id/estado",           pedidosController.actualizarEstado);
+router.get("/activos", pedidosController.getPedidosActivos);
 
 module.exports = router;

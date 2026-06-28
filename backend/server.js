@@ -12,10 +12,10 @@ const server = http.createServer(app);
 
 // ── Socket.io ─────────────────────────────────────────────
 // Por ahora solo inicializa la conexión base
-// La lógica de tiempo real se irá agregando por módulo
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     methods: ["GET", "POST"],
   },
 });

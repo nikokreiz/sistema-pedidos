@@ -130,13 +130,56 @@ function FormularioPagoOnline({ total, onConfirmar, procesando }) {
   );
 }
 
-function PantallaExito({ metodoPago, mesaId, total }) {
+function PantallaExito({ metodoPago, mesaId, total, pedido, items, nota, correo, setCorreo }) {
+  const navigate = useNavigate();
   const MENSAJES = {
     online:   { icono: "OK", titulo: "Pago exitoso!",      desc: "Tu pago fue procesado. Disfruta tu pedido!" },
     efectivo: { icono: "$$", titulo: "Pedido confirmado!", desc: "Un garzon pasara pronto a cobrarte en efectivo." },
     garzon:   { icono: "!!", titulo: "En camino!",          desc: "Un garzon se dirigira a tu mesa en breve." },
   };
   const msg = MENSAJES[metodoPago] || MENSAJES.online;
+
+  const itemsDetalle = Object.entries(pedido || {})
+    .map(([id, cantidad]) => {
+      const item = items.find((i) => i.id === id);
+      return item ? { ...item, cantidad } : null;
+    })
+    .filter(Boolean);
+
+  const construirBoleta = () => {
+    const lineas = [];
+    lineas.push("=== BOLETA / DETALLE DE PEDIDO ===");
+    lineas.push(`Mesa: #${mesaId}`);
+    lineas.push(`Método de pago: ${metodoPago}`);
+    lineas.push(`Correo: ${correo || "No proporcionado"}`);
+    lineas.push(`"Nota: ${nota || "Sin observaciones"}`);
+    lineas.push("");
+    lineas.push("Items:");
+    itemsDetalle.forEach((item) => {
+      lineas.push(`- ${item.nombre} x${item.cantidad} = ${formatPrecio(item.precio * item.cantidad)}`);
+    });
+    lineas.push("");
+    lineas.push(`Total: ${formatPrecio(total)}`);
+    return lineas.join("\n");
+  };
+
+  const descargarBoleta = () => {
+    const contenido = construirBoleta();
+    const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `boleta-mesa-${mesaId}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const enviarPorCorreo = () => {
+    if (!correo) return;
+    const asunto = encodeURIComponent("Boleta de tu pedido");
+    const cuerpo = encodeURIComponent(construirBoleta());
+    window.location.href = `mailto:${correo}?subject=${asunto}&body=${cuerpo}`;
+  };
 
   return (
     <div className={`${styles.exitoPage} fade-up`}>
@@ -156,7 +199,30 @@ function PantallaExito({ metodoPago, mesaId, total }) {
             </div>
           )}
         </div>
+
+        <div className={styles.boletaBox}>
+          <label className={styles.boletaLabel}>Correo para la boleta</label>
+          <input
+            className={styles.inputCorreo}
+            type="email"
+            placeholder="tu@email.com"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+          />
+          <div className={styles.boletaAcciones}>
+            <button className={styles.btnBoleta} onClick={descargarBoleta}>
+              Descargar boleta
+            </button>
+            <button className={styles.btnBoletaPrimario} onClick={enviarPorCorreo} disabled={!correo}>
+              Enviar por correo
+            </button>
+          </div>
+        </div>
+
         <p className={styles.exitoNota}>Gracias por tu preferencia!</p>
+        <button className={styles.btnInicio} onClick={() => navigate("/", { replace: true })}>
+          Volver a la página inicial
+        </button>
       </div>
     </div>
   );
@@ -178,6 +244,7 @@ export default function Pago() {
   const [procesando, setProcesando] = useState(false);
   const [exitoso, setExitoso]       = useState(false);
   const [error, setError]           = useState("");
+  const [correo, setCorreo]         = useState("");
 
   const confirmarPedido = async () => {
     setProcesando(true);
@@ -190,6 +257,7 @@ export default function Pago() {
         pedido,
         metodoPago,
         nota,
+        correo,
       });
       setExitoso(true);
     } catch (err) {
@@ -200,7 +268,18 @@ export default function Pago() {
   };
 
   if (exitoso) {
-    return <PantallaExito metodoPago={metodoPago} mesaId={mesaId} total={total} />;
+    return (
+      <PantallaExito
+        metodoPago={metodoPago}
+        mesaId={mesaId}
+        total={total}
+        pedido={pedido}
+        items={items}
+        nota={nota}
+        correo={correo}
+        setCorreo={setCorreo}
+      />
+    );
   }
 
   return (

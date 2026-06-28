@@ -1,0 +1,168 @@
+/* ── Tarjeta de pedido ────────────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: fadeIn 0.3s ease forwards;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardPendiente  { border-top: 3px solid var(--color-pendiente); }
+.cardPreparando { border-top: 3px solid var(--color-preparando); }
+.cardListo      { border-top: 3px solid var(--color-listo); }
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mesaInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mesaNumero {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.tiempo {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0.2rem 0.6rem;
+}
+
+/* ── Badge de estado ──────────────────────────────────────── */
+.badge {
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.badgePendiente {
+  background: color-mix(in srgb, var(--color-pendiente) 15%, transparent);
+  color: var(--color-pendiente);
+  border: 1px solid color-mix(in srgb, var(--color-pendiente) 30%, transparent);
+  animation: pulse 2s infinite;
+}
+
+.badgePreparando {
+  background: color-mix(in srgb, var(--color-preparando) 15%, transparent);
+  color: var(--color-preparando);
+  border: 1px solid color-mix(in srgb, var(--color-preparando) 30%, transparent);
+}
+
+.badgeListo {
+  background: color-mix(in srgb, var(--color-listo) 15%, transparent);
+  color: var(--color-listo);
+  border: 1px solid color-mix(in srgb, var(--color-listo) 30%, transparent);
+}
+
+/* ── Items del pedido ─────────────────────────────────────── */
+.items {
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.itemCantidad {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  min-width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.itemNombre {
+  color: var(--color-text);
+  flex: 1;
+}
+
+/* ── Nota de cocina ───────────────────────────────────────── */
+.nota {
+  margin: 0 1rem 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ── Footer con botón de acción ───────────────────────────── */
+.footer {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.btnAccion {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btnIniciar {
+  background: var(--color-preparando);
+  color: #fff;
+}
+.btnIniciar:hover { background: #2563EB; }
+
+.btnListo {
+  background: var(--color-listo);
+  color: #fff;
+}
+.btnListo:hover { background: #059669; }
+
+.btnDeshabilitado {
+  background: var(--color-surface-2);
+  color: var(--color-text-dim);
+  cursor: default;
+}
+
+/* ── Spinner ──────────────────────────────────────────────── */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

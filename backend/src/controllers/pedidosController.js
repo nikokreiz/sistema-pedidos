@@ -4,29 +4,70 @@ const pool = require("../config/db");
 const crearPedido = async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { mesa_id, sesion_id, items, metodo_pago, nota } = req.body;
+    const { mesa_numero, items, metodo_pago, nota, correo } = req.body;
 
-    // Calculamos el total a partir de los precios reales en BD
     await client.query("BEGIN");
 
-    // 1 — Crear el pedido
+    // 1 — Buscar la mesa por número y obtener su UUID y sucursal
+    const mesaResult = await client.query(
+      `SELECT m.id, m.sucursal_id
+       FROM mesas m
+       JOIN sucursales s ON m.sucursal_id = s.id
+       WHERE m.numero = $1 AND m.activa = true
+       LIMIT 1`,
+      [mesa_numero]
+    );
+
+    if (mesaResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ ok: false, mensaje: "Mesa no encontrada" });
+    }
+
+    const mesa = mesaResult.rows[0];
+
+    // 2 — Crear o reutilizar sesión activa de la mesa
+    let sesionId;
+    const sesionExistente = await client.query(
+      `SELECT id FROM sesiones_mesa
+       WHERE mesa_id = $1 AND estado = 'activa'
+       LIMIT 1`,
+      [mesa.id]
+    );
+
+    if (sesionExistente.rows.length > 0) {
+      sesionId = sesionExistente.rows[0].id;
+    } else {
+      const nuevaSesion = await client.query(
+        `INSERT INTO sesiones_mesa (mesa_id, estado)
+         VALUES ($1, 'activa') RETURNING id`,
+        [mesa.id]
+      );
+      sesionId = nuevaSesion.rows[0].id;
+    }
+
+    // 3 — Crear el pedido
     const pedidoResult = await client.query(
       `INSERT INTO pedidos (mesa_id, sesion_id, metodo_pago, estado, total)
        VALUES ($1, $2, $3, 'pendiente', 0)
        RETURNING id`,
-      [mesa_id, sesion_id, metodo_pago]
+      [mesa.id, sesionId, metodo_pago]
     );
     const pedidoId = pedidoResult.rows[0].id;
 
-    // 2 — Insertar cada item y calcular total
+    // 4 — Insertar items y calcular total
     let total = 0;
+    const itemsDetalle = [];
+
     for (const item of items) {
       const itemResult = await client.query(
-        `SELECT precio FROM items_menu WHERE id = $1`,
+        `SELECT id, nombre, precio FROM items_menu WHERE id = $1`,
         [item.item_id]
       );
-      const precio = itemResult.rows[0].precio;
-      const subtotal = precio * item.cantidad;
+
+      if (itemResult.rows.length === 0) continue;
+
+      const { precio, nombre } = itemResult.rows[0];
+      const subtotal = parseFloat(precio) * item.cantidad;
       total += subtotal;
 
       await client.query(
@@ -34,9 +75,11 @@ const crearPedido = async (req, res, next) => {
          VALUES ($1, $2, $3, $4, $5)`,
         [pedidoId, item.item_id, item.cantidad, precio, nota || null]
       );
+
+      itemsDetalle.push({ nombre, cantidad: item.cantidad, precio });
     }
 
-    // 3 — Actualizar el total del pedido
+    // 5 — Actualizar total del pedido
     await client.query(
       `UPDATE pedidos SET total = $1 WHERE id = $2`,
       [total, pedidoId]
@@ -44,11 +87,19 @@ const crearPedido = async (req, res, next) => {
 
     await client.query("COMMIT");
 
-    // 4 — Emitir evento Socket.io a la cocina en tiempo real
+    // 6 — Emitir evento Socket.io a la cocina en tiempo real
     const io = req.app.get("io");
-    io.emit("nuevo_pedido", { pedidoId, mesa_id, total });
+    io.emit("nuevo_pedido", {
+      pedidoId,
+      mesaNumero: mesa_numero,
+      items:      itemsDetalle,
+      metodoPago: metodo_pago,
+      total,
+      correo,
+    });
 
-    res.status(201).json({ ok: true, pedidoId, total });
+    res.status(201).json({ ok: true, pedidoId, total, correo });
+
   } catch (err) {
     await client.query("ROLLBACK");
     next(err);
@@ -65,11 +116,11 @@ const getPedidosMesa = async (req, res, next) => {
     const result = await pool.query(
       `SELECT p.id, p.estado, p.metodo_pago, p.total, p.creado_en,
               json_agg(json_build_object(
-                'item_id',        ip.item_menu_id,
-                'nombre',         im.nombre,
-                'cantidad',       ip.cantidad,
-                'precio_unitario',ip.precio_unitario,
-                'estado',         ip.estado
+                'item_id',         ip.item_menu_id,
+                'nombre',          im.nombre,
+                'cantidad',        ip.cantidad,
+                'precio_unitario', ip.precio_unitario,
+                'estado',          ip.estado
               )) AS items
        FROM pedidos p
        JOIN items_pedido ip ON ip.pedido_id = p.id
@@ -108,7 +159,6 @@ const actualizarEstado = async (req, res, next) => {
       return res.status(404).json({ ok: false, mensaje: "Pedido no encontrado" });
     }
 
-    // Emitir evento en tiempo real a garzones y cliente
     const io = req.app.get("io");
     io.emit("pedido_actualizado", result.rows[0]);
 
@@ -118,4 +168,27 @@ const actualizarEstado = async (req, res, next) => {
   }
 };
 
-module.exports = { crearPedido, getPedidosMesa, actualizarEstado };
+const getPedidosActivos = async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.id, p.estado, p.metodo_pago, p.total,
+              p.creado_en, m.numero AS mesa_numero,
+              json_agg(json_build_object(
+                'nombre',   im.nombre,
+                'cantidad', ip.cantidad
+              )) AS items
+       FROM pedidos p
+       JOIN mesas m        ON m.id = p.mesa_id
+       JOIN items_pedido ip ON ip.pedido_id = p.id
+       JOIN items_menu   im ON im.id = ip.item_menu_id
+       WHERE p.estado NOT IN ('entregado','pagado')
+       GROUP BY p.id, m.numero
+       ORDER BY p.creado_en ASC`
+    );
+    res.json({ ok: true, pedidos: result.rows });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { crearPedido, getPedidosMesa, actualizarEstado, getPedidosActivos };
