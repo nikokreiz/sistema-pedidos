@@ -1,0 +1,149 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  animation: fadeIn 0.3s ease forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cardOcupada {
+  border-top: 3px solid var(--color-primary);
+}
+
+.cardLista {
+  border-top: 3px solid var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
+}
+
+.cardLimpia {
+  border-top: 3px solid var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.numero {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badgeOcupada {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.badgeLista {
+  background: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+  animation: pulse 1.5s infinite;
+}
+
+.badgeLimpia {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: 0.8rem;
+}
+
+.pedidoNumero {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.pedidoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.pedidoItemNombre {
+  color: var(--color-text);
+}
+
+.pedidoItemCant {
+  background: var(--color-bg);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.botones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.btnLlamada {
+  background: var(--color-warning);
+  color: #000;
+}
+.btnLlamada:hover { background: #FBBF24; }
+
+.btnEntregado {
+  background: var(--color-success);
+  color: #fff;
+}
+.btnEntregado:hover { background: #059669; }
+
+.btnDeshabilitado {
+  background: var(--color-surface-2);
+  color: var(--color-text-dim);
+  cursor: default;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
