@@ -19,6 +19,7 @@ function App() {
   }, []);
 
   // Conexión Socket.io
+  
   useEffect(() => {
     if (!garzon) return;
 
@@ -31,6 +32,12 @@ function App() {
 
     newSocket.on("disconnect", () => {
       setConectado(false);
+    });
+
+    // Escucha cuando un pedido está listo
+    newSocket.on("pedido_actualizado", (data) => {
+      console.log("Pedido actualizado:", data);
+      // Aquí se dispara cuando cocina cambia estado
     });
 
     setSocket(newSocket);

@@ -1,14 +1,12 @@
 const pool = require("../config/db");
 
-// POST /api/pedidos
 const crearPedido = async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { mesa_numero, items, metodo_pago, nota, correo } = req.body;
+    const { mesa_numero, items, metodo_pago, nota } = req.body;
 
     await client.query("BEGIN");
 
-    // 1 — Buscar la mesa por número y obtener su UUID y sucursal
     const mesaResult = await client.query(
       `SELECT m.id, m.sucursal_id
        FROM mesas m
@@ -25,7 +23,6 @@ const crearPedido = async (req, res, next) => {
 
     const mesa = mesaResult.rows[0];
 
-    // 2 — Crear o reutilizar sesión activa de la mesa
     let sesionId;
     const sesionExistente = await client.query(
       `SELECT id FROM sesiones_mesa
@@ -45,7 +42,6 @@ const crearPedido = async (req, res, next) => {
       sesionId = nuevaSesion.rows[0].id;
     }
 
-    // 3 — Crear el pedido
     const pedidoResult = await client.query(
       `INSERT INTO pedidos (mesa_id, sesion_id, metodo_pago, estado, total)
        VALUES ($1, $2, $3, 'pendiente', 0)
@@ -54,7 +50,6 @@ const crearPedido = async (req, res, next) => {
     );
     const pedidoId = pedidoResult.rows[0].id;
 
-    // 4 — Insertar items y calcular total
     let total = 0;
     const itemsDetalle = [];
 
@@ -79,7 +74,6 @@ const crearPedido = async (req, res, next) => {
       itemsDetalle.push({ nombre, cantidad: item.cantidad, precio });
     }
 
-    // 5 — Actualizar total del pedido
     await client.query(
       `UPDATE pedidos SET total = $1 WHERE id = $2`,
       [total, pedidoId]
@@ -87,18 +81,16 @@ const crearPedido = async (req, res, next) => {
 
     await client.query("COMMIT");
 
-    // 6 — Emitir evento Socket.io a la cocina en tiempo real
     const io = req.app.get("io");
     io.emit("nuevo_pedido", {
       pedidoId,
       mesaNumero: mesa_numero,
-      items:      itemsDetalle,
+      items: itemsDetalle,
       metodoPago: metodo_pago,
       total,
-      correo,
     });
 
-    res.status(201).json({ ok: true, pedidoId, total, correo });
+    res.status(201).json({ ok: true, pedidoId, total });
 
   } catch (err) {
     await client.query("ROLLBACK");
@@ -108,7 +100,6 @@ const crearPedido = async (req, res, next) => {
   }
 };
 
-// GET /api/pedidos/mesa/:mesaId
 const getPedidosMesa = async (req, res, next) => {
   try {
     const { mesaId } = req.params;
@@ -138,7 +129,6 @@ const getPedidosMesa = async (req, res, next) => {
   }
 };
 
-// PUT /api/pedidos/:id/estado
 const actualizarEstado = async (req, res, next) => {
   try {
     const { id }     = req.params;

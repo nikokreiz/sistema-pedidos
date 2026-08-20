@@ -11,7 +11,6 @@ export default function Cocina() {
   const [conectado, setConectado]   = useState(false);
   const [cargando, setCargando]     = useState(true);
 
-  // ── Carga pedidos activos al iniciar ────────────────────────────────────────
   useEffect(() => {
     const cargarPedidosActivos = async () => {
       try {
@@ -27,7 +26,6 @@ export default function Cocina() {
     cargarPedidosActivos();
   }, []);
 
-  // ── Conexión Socket.io — escucha pedidos en tiempo real ────────────────────
   useEffect(() => {
     const socket = io(SOCKET_URL);
 
@@ -41,7 +39,6 @@ export default function Cocina() {
       setConectado(false);
     });
 
-    // Nuevo pedido entrante desde el cliente
     socket.on("nuevo_pedido", (data) => {
       const nuevoPedido = {
         id:           data.pedidoId,
@@ -56,7 +53,6 @@ export default function Cocina() {
       setPedidos((prev) => [nuevoPedido, ...prev]);
     });
 
-    // Pedido actualizado (cuando el garzon lo marca como entregado)
     socket.on("pedido_actualizado", (data) => {
       setPedidos((prev) =>
         prev.map((p) =>
@@ -65,10 +61,15 @@ export default function Cocina() {
       );
     });
 
+    socket.on("pedido_entregado", (data) => {
+      setPedidos((prev) =>
+        prev.filter((p) => p.id !== data.pedidoId)
+      );
+    });
+
     return () => socket.disconnect();
   }, []);
 
-  // ── Actualiza el estado de un pedido localmente ─────────────────────────────
   const handleEstadoCambiado = (pedidoId, nuevoEstado) => {
     setPedidos((prev) =>
       prev.map((p) =>
@@ -77,7 +78,6 @@ export default function Cocina() {
     );
   };
 
-  // ── Filtra pedidos por estado ───────────────────────────────────────────────
   const pendientes  = pedidos.filter((p) => p.estado === "pendiente");
   const preparando  = pedidos.filter((p) => p.estado === "preparando");
   const listos      = pedidos.filter((p) => p.estado === "listo");
@@ -96,7 +96,6 @@ export default function Cocina() {
   return (
     <div className={styles.page}>
 
-      {/* ── Header ── */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <div>
@@ -112,7 +111,6 @@ export default function Cocina() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
       <div className={styles.stats}>
         <div className={`${styles.stat} ${styles.statPendiente}`}>
           <span className={styles.statNumero}>{pendientes.length}</span>
@@ -128,7 +126,6 @@ export default function Cocina() {
         </div>
       </div>
 
-      {/* ── Columnas ── */}
       {pedidos.length === 0 ? (
         <div className={styles.columnas}>
           <div className={styles.sinPedidos}>
@@ -140,7 +137,6 @@ export default function Cocina() {
       ) : (
         <div className={styles.columnas}>
 
-          {/* Pendientes */}
           <div className={styles.columna}>
             <div className={styles.columnaHeader}>
               <span className={`${styles.columnaLabel} ${styles.labelPendiente}`}>
@@ -160,7 +156,6 @@ export default function Cocina() {
             }
           </div>
 
-          {/* Preparando */}
           <div className={styles.columna}>
             <div className={styles.columnaHeader}>
               <span className={`${styles.columnaLabel} ${styles.labelPreparando}`}>
@@ -180,7 +175,6 @@ export default function Cocina() {
             }
           </div>
 
-          {/* Listos */}
           <div className={styles.columna}>
             <div className={styles.columnaHeader}>
               <span className={`${styles.columnaLabel} ${styles.labelListo}`}>

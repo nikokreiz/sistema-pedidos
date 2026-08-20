@@ -54,6 +54,24 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
     );
   };
 
+// Escuchar cuando cocina marca pedido como listo
+useEffect(() => {
+  if (!socket) return;
+
+  socket.on("pedido_actualizado", async (data) => {
+    console.log("Recargando mesas por actualización:", data);
+    // Recarga las mesas
+    try {
+      const response = await api.get(`/garzones/${garzon.id}/mesas`);
+      setMesas(response.mesas || []);
+    } catch (err) {
+      console.error("Error recargando mesas:", err.message);
+    }
+  });
+
+  return () => socket.off("pedido_actualizado");
+}, [socket, garzon.id]);
+
   if (cargando) {
     return (
       <div className={styles.page}>
