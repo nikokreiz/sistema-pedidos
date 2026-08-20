@@ -5,5 +5,6 @@ const adminController = require("../controllers/adminController");
 router.post("/login", adminController.loginAdmin);
 router.get("/horarios/:comercioId", adminController.getHorarios);
 router.put("/horarios/:comercioId/:diaSemana", adminController.actualizarHorario);
+router.get("/verificar-abierto/:comercioId", adminController.verificarLocalAbierto);
 
 module.exports = router;

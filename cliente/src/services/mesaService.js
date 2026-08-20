@@ -15,4 +15,9 @@ const getMesas = async (sucursalId) => {
   return data.mesas;
 };
 
-export const mesaService = { verificarMesa, verificarMesaPorQR, getMesas };
+const verificarLocalAbierto = async (comercioId) => {
+  const data = await api.get(`/admin/verificar-abierto/${comercioId}`);
+  return data;
+};
+
+export const mesaService = { verificarMesa, verificarMesaPorQR, getMesas, verificarLocalAbierto };

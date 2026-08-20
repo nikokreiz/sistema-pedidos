@@ -73,4 +73,39 @@ const actualizarHorario = async (req, res, next) => {
   }
 };
 
-module.exports = { loginAdmin, getHorarios, actualizarHorario };
+const verificarLocalAbierto = async (req, res, next) => {
+  try {
+    const { comercioId } = req.params;
+    
+    const ahora = new Date();
+    const diaSemana = ahora.getDay() === 0 ? 6 : ahora.getDay() - 1; // 0=Lunes, 6=Domingo
+    const horaActual = ahora.toTimeString().split(' ')[0]; // HH:MM:SS
+
+    const result = await pool.query(
+      `SELECT abierto, hora_apertura, hora_cierre
+       FROM horarios_comercio
+       WHERE comercio_id = $1 AND dia_semana = $2`,
+      [comercioId, diaSemana]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ ok: false, mensaje: "Horario no configurado" });
+    }
+
+    const horario = result.rows[0];
+    const abierto = horario.abierto && 
+                    horaActual >= horario.hora_apertura && 
+                    horaActual < horario.hora_cierre;
+
+    res.json({ 
+      ok: true, 
+      abierto,
+      hora_apertura: horario.hora_apertura,
+      hora_cierre: horario.hora_cierre
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { loginAdmin, getHorarios, actualizarHorario, verificarLocalAbierto };

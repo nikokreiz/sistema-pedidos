@@ -32,6 +32,15 @@ export default function QRLanding() {
     try {
       const mesaData = await mesaService.verificarMesaPorQR(qrCode);
       
+      // Verifica si el local está abierto
+      const estadoLocal = await mesaService.verificarLocalAbierto(mesaData.comercio_id);
+      
+      if (!estadoLocal.abierto) {
+        setError(`Local cerrado. Abierto de ${estadoLocal.hora_apertura} a ${estadoLocal.hora_cierre}`);
+        setCargando(false);
+        return;
+      }
+      
       setStep(STEPS.EXITO);
       setTimeout(() => {
         navigate(`/menu/${mesaData.numero}`, {
@@ -61,6 +70,15 @@ export default function QRLanding() {
     try {
       const qrCodigo = `QR-MESA-${String(num).padStart(3, "0")}`;
       const mesaData = await mesaService.verificarMesa(qrCodigo);
+
+      // Verifica si el local está abierto
+      const estadoLocal = await mesaService.verificarLocalAbierto(mesaData.comercio_id);
+      
+      if (!estadoLocal.abierto) {
+        setError(`Local cerrado. Abierto de ${estadoLocal.hora_apertura} a ${estadoLocal.hora_cierre}`);
+        setCargando(false);
+        return;
+      }
 
       setStep(STEPS.EXITO);
 
