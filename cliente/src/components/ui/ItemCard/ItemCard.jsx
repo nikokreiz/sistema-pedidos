@@ -4,14 +4,15 @@ import styles from "./ItemCard.module.css";
 const formatPrecio = (precio) =>
   precio.toLocaleString("es-CL", { style: "currency", currency: "CLP" });
 
-export default function ItemCard({ item, cantidad, onAgregar, onQuitar }) {
+export default function ItemCard({ item, cantidad, onAgregar, onRemover }) {
   const agregado = cantidad > 0;
+  const disponible = item.activo !== false;
 
   return (
     <div className={`
       ${styles.card}
       ${agregado ? styles.cardAgregado : ""}
-      ${!item.disponible ? styles.cardNoDisponible : ""}
+      ${!disponible ? styles.cardNoDisponible : ""}
     `}>
 
       {/* Imagen / Emoji */}
@@ -20,23 +21,22 @@ export default function ItemCard({ item, cantidad, onAgregar, onQuitar }) {
       {/* Contenido */}
       <div className={styles.contenido}>
         <p className={styles.nombre}>{item.nombre}</p>
-        <p className={styles.descripcion}>{item.descripcion}</p>
+        <p className={styles.descripcion}>{item.descripcion || "Sin descripción"}</p>
         <div className={styles.footer}>
           <span className={styles.precio}>{formatPrecio(item.precio)}</span>
-          <span className={styles.tiempo}>⏱ {item.tiempo_preparacion_min} min</span>
         </div>
       </div>
 
       {/* Badge no disponible */}
-      {!item.disponible && (
+      {!disponible && (
         <span className={styles.badgeNoDisponible}>Agotado</span>
       )}
 
       {/* Controles de cantidad */}
-      {item.disponible && (
+      {disponible && (
         agregado ? (
           <div className={styles.contador}>
-            <button className={styles.btnCantidad} onClick={() => onQuitar(item)}>−</button>
+            <button className={styles.btnCantidad} onClick={() => onRemover(item)}>−</button>
             <span className={styles.cantidad}>{cantidad}</span>
             <button className={styles.btnCantidad} onClick={() => onAgregar(item)}>+</button>
           </div>

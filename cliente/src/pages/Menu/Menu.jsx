@@ -1,90 +1,99 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Menu.module.css";
 import ItemCard from "../../components/ui/ItemCard/ItemCard";
-import { COMERCIO } from "../../constants/comercio";
 import { menuService } from "../../services/menuService";
-import { getEmoji } from "../../constants/emojiMap"; 
-
-const formatPrecio = (precio) =>
-  precio.toLocaleString("es-CL", { style: "currency", currency: "CLP" });
 
 export default function Menu() {
-  const { mesaId }   = useParams();
-  const location     = useLocation();
-  const navigate     = useNavigate();
+  const { mesaNumero } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Datos reales de la mesa que vienen desde QRLanding
-  const { comercioId = null } = location.state || {};
+  const { mesaId, comercioId } = location.state || {};
 
-  const [categorias, setCategorias]       = useState([]);
-  const [items, setItems]                 = useState([]);
-  const [categoriaActiva, setCategoriaActiva] = useState(null);
-  const [pedido, setPedido]               = useState({});
-  const [cargando, setCargando]           = useState(true);
-  const [error, setError]                 = useState("");
+  const [items, setItems] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [pedido, setPedido] = useState({});
 
-  // ── Carga el menú real desde el backend ────────────────────────────────────
   useEffect(() => {
-    const cargarMenu = async () => {
-      try {
-        setCargando(true);
-
-        // ID del comercio — viene del state de navegación
-        // En desarrollo usamos el ID fijo que insertamos en la BD
-        const id = comercioId || "a1b2c3d4-0000-0000-0000-000000000001";
-        const data = await menuService.getMenu(id);
-
-        setCategorias(data.categorias);
-        setItems(data.items);
-
-        if (data.categorias.length > 0) {
-          setCategoriaActiva(data.categorias[0].id);
-        }
-      } catch (err) {
-        setError("No se pudo cargar el menú. Intenta de nuevo.");
-      } finally {
-        setCargando(false);
-      }
-    };
-
+    if (!comercioId) {
+      setError("Comercio no encontrado. Vuelve a escanear el QR.");
+      setCargando(false);
+      return;
+    }
     cargarMenu();
   }, [comercioId]);
 
-  // ── Items filtrados por categoría ───────────────────────────────────────────
-  const itemsFiltrados = useMemo(
-    () => items.filter((i) => i.categoria_id === categoriaActiva),
-    [items, categoriaActiva]
-  );
+  const cargarMenu = async () => {
+    try {
+      console.log("Cargando menú para comercio:", comercioId);
+      const data = await menuService.getMenu(comercioId);
+      console.log("Datos recibidos:", data);
+      
+      setItems(data.items || []);
+      setError("");
+    } catch (err) {
+      console.error("Error cargando menú:", err);
+      setError("No se pudo cargar el menú. Intenta de nuevo.");
+    } finally {
+      setCargando(false);
+    }
+  };
 
-  // ── Manejo del pedido ───────────────────────────────────────────────────────
-  const agregarItem = (item) =>
-    setPedido((prev) => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }));
+  const handleAgregarAlPedido = (item) => {
+  setPedido((prev) => ({
+    ...prev,
+    [item.id]: (prev[item.id] || 0) + 1,
+  }));
+};
 
-  const quitarItem = (item) =>
-    setPedido((prev) => {
-      const nueva = { ...prev };
-      if (nueva[item.id] <= 1) delete nueva[item.id];
-      else nueva[item.id] -= 1;
-      return nueva;
+const handleRemoverDelPedido = (item) => {
+  setPedido((prev) => {
+    const nueva = { ...prev };
+    if (nueva[item.id] > 1) {
+      nueva[item.id]--;
+    } else {
+      delete nueva[item.id];
+    }
+    return nueva;
+  });
+};
+
+  const handleIrAlResumen = () => {
+    const itemsSeleccionados = Object.entries(pedido)
+      .filter(([_, cant]) => cant > 0)
+      .map(([itemId, cantidad]) => {
+        const item = items.find((i) => i.id === itemId);
+        return {
+          item_id: itemId,
+          nombre: item.nombre,
+          cantidad,
+          precio: item.precio,
+          subtotal: item.precio * cantidad,
+        };
+      });
+
+    if (itemsSeleccionados.length === 0) {
+      alert("Selecciona al menos un item");
+      return;
+    }
+
+    navigate("/resumen", {
+      state: {
+        items: itemsSeleccionados,
+        mesaId,
+        mesaNumero: parseInt(mesaNumero),
+        comercioId,
+      },
     });
+  };
 
-  // ── Totales ─────────────────────────────────────────────────────────────────
-  const totalItems = Object.values(pedido).reduce((a, b) => a + b, 0);
-  const totalPrecio = Object.entries(pedido).reduce((acc, [id, cant]) => {
-    const item = items.find((i) => i.id === id);
-    return acc + (item ? item.precio * cant : 0);
-  }, 0);
-
-  const irAlResumen = () =>
-  navigate("/resumen", { state: { pedido, mesaId, items } });
-
-  // ── Estados de carga y error ────────────────────────────────────────────────
   if (cargando) {
     return (
-      <div className={styles.page} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className={styles.vacio}>
-          <div className={styles.vacioIcon}>⏳</div>
+      <div className={styles.page}>
+        <div className={styles.cargando}>
+          <div className={styles.spinner} />
           <p>Cargando menú...</p>
         </div>
       </div>
@@ -93,10 +102,10 @@ export default function Menu() {
 
   if (error) {
     return (
-      <div className={styles.page} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className={styles.vacio}>
-          <div className={styles.vacioIcon}>❌</div>
+      <div className={styles.page}>
+        <div className={styles.error}>
           <p>{error}</p>
+          <button onClick={() => navigate("/")}>Volver al inicio</button>
         </div>
       </div>
     );
@@ -105,67 +114,38 @@ export default function Menu() {
   return (
     <div className={styles.page}>
 
-      {/* ── Header sticky ── */}
+      {/* Header */}
       <div className={styles.header}>
-        <div className={styles.headerTop}>
-          <div className={styles.headerInfo}>
-            <span className={styles.headerLogo}>{COMERCIO.logo}</span>
-            <div>
-              <p className={styles.headerNombre}>{COMERCIO.nombre}</p>
-              <p className={styles.headerMesa}>Mesa #{mesaId}</p>
-            </div>
-          </div>
-          <span className={styles.headerBadge}>Abierto</span>
+        <div>
+          <p className={styles.titulo}>Menú</p>
+          <p className={styles.subtitulo}>Mesa #{mesaNumero}</p>
         </div>
+      </div>
 
-        <div className={styles.tabs}>
-          {categorias.map((cat) => (
-            <button
-              key={cat.id}
-              className={`${styles.tab} ${categoriaActiva === cat.id ? styles.tabActivo : ""}`}
-              onClick={() => setCategoriaActiva(cat.id)}
-            >
-              {cat.nombre}
-            </button>
+      {/* Contenido */}
+      {items.length === 0 ? (
+        <div className={styles.vacio}>
+          <p>No hay items disponibles en este momento</p>
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {items.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              cantidad={pedido[item.id] || 0}
+              onAgregar={() => handleAgregarAlPedido(item)}
+              onRemover={() => handleRemoverDelPedido(item.id)}
+            />
           ))}
         </div>
-      </div>
+      )}
 
-      {/* ── Lista de items ── */}
-      <div className={styles.contenido}>
-        <h2 className={styles.seccionTitulo}>
-          {categorias.find((c) => c.id === categoriaActiva)?.nombre}
-        </h2>
-
-        {itemsFiltrados.length > 0 ? (
-          <div className={styles.itemsLista}>
-            {itemsFiltrados.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={{ ...item, imagen: getEmoji(item.imagen_url) }}
-                cantidad={pedido[item.id] || 0}
-                onAgregar={agregarItem}
-                onQuitar={quitarItem}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className={styles.vacio}>
-            <div className={styles.vacioIcon}>🍽️</div>
-            <p>No hay items disponibles en esta categoría.</p>
-          </div>
-        )}
-      </div>
-
-      {/* ── Botón flotante del carrito ── */}
-      {totalItems > 0 && (
-        <div className={styles.carritoFloat}>
-          <button className={styles.carritoBtn} onClick={irAlResumen}>
-            <div className={styles.carritoBtnLeft}>
-              <span className={styles.carritoBadge}>{totalItems}</span>
-              <span>Ver mi pedido</span>
-            </div>
-            <span className={styles.carritoTotal}>{formatPrecio(totalPrecio)}</span>
+      {/* Footer */}
+      {items.length > 0 && Object.values(pedido).some((c) => c > 0) && (
+        <div className={styles.footer}>
+          <button className={styles.btnResumen} onClick={handleIrAlResumen}>
+            Ver Resumen ({Object.values(pedido).reduce((a, b) => a + b, 0)} items)
           </button>
         </div>
       )}

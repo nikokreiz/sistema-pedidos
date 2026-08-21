@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import styles from "./Dashboard.module.css";
 import Horarios from "../../components/ui/Horarios/Horarios";
+import MenuManagement from "../MenuManagement/MenuManagement";
 import api from "../../services/api";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -126,15 +127,12 @@ export default function Dashboard({ admin, onLogout }) {
           </div>
         )}
 
-        {tabActiva === "horarios" && (
-          <Horarios admin={admin} horarios={horarios} onSave={setHorarios} />
+        {tabActiva === "menu" && (
+          <MenuManagement admin={admin} />
         )}
 
-        {tabActiva === "menu" && (
-          <div className={styles.seccion}>
-            <h2 className={styles.seccionTitulo}>Gestión de Menú</h2>
-            <p style={{ color: "var(--color-text-muted)" }}>Próximamente...</p>
-          </div>
+        {tabActiva === "horarios" && (
+          <Horarios admin={admin} horarios={horarios} onSave={setHorarios} />
         )}
 
         {tabActiva === "mesas" && (

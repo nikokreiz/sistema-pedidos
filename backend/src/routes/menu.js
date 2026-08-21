@@ -1,8 +1,10 @@
 const express = require("express");
-const router  = express.Router();
+const router = express.Router();
 const menuController = require("../controllers/menuController");
 
-// GET /api/menu/:comercioId  → obtiene categorías e items del menú
 router.get("/:comercioId", menuController.getMenu);
+router.post("/items", menuController.crearItem);
+router.put("/items/:itemId", menuController.actualizarItem);
+router.delete("/items/:itemId", menuController.eliminarItem);
 
 module.exports = router;
