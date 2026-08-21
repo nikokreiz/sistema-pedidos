@@ -10,10 +10,13 @@ const getMenu = async (comercioId) => {
     if (cat.items && cat.items.length > 0) {
       cat.items.forEach((item) => {
         if (item && item.id) {
+          const imagenUrl = item.imagen_url || "";
           items.push({
             ...item,
+            categoria_id: item.categoria_id || cat.id,
             precio: parseFloat(item.precio),
-            imagen: getEmoji(item.imagen_url),
+            imagen_url: imagenUrl,
+            imagen: imagenUrl || getEmoji(item.imagen_url),
           });
         }
       });

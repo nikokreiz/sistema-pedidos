@@ -9,6 +9,7 @@ const getMenu = async (req, res, next) => {
               COALESCE(
                 json_agg(json_build_object(
                   'id',          im.id,
+                  'categoria_id', c.id,
                   'nombre',      im.nombre,
                   'descripcion', im.descripcion,
                   'precio',      im.precio,

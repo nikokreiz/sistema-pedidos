@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import styles from "../Dashboard/Dashboard.module.css";
 import { menuService } from "../../services/menuService";
 
+const leerArchivoComoDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    reader.readAsDataURL(file);
+  });
+
 export default function MenuManagement({ admin }) {
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [formNuevo, setFormNuevo] = useState({
-    categoriaId: "",
     nombre: "",
     descripcion: "",
     precio: "",
@@ -30,6 +37,22 @@ export default function MenuManagement({ admin }) {
     }
   };
 
+  const resetFormNuevo = () => {
+    setFormNuevo({ nombre: "", descripcion: "", precio: "", imagenUrl: "" });
+  };
+
+  const handleArchivoSeleccionado = async (event, setter) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await leerArchivoComoDataUrl(file);
+      setter((prev) => ({ ...prev, imagenUrl: url }));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleCrearItem = async (e, categoriaId) => {
     e.preventDefault();
     if (!formNuevo.nombre || !formNuevo.precio) {
@@ -45,8 +68,8 @@ export default function MenuManagement({ admin }) {
         formNuevo.precio,
         formNuevo.imagenUrl
       );
-      setFormNuevo({ categoriaId: "", nombre: "", descripcion: "", precio: "", imagenUrl: "" });
-      cargarMenu();
+      resetFormNuevo();
+      await cargarMenu();
       alert("Item creado correctamente");
     } catch (err) {
       alert("Error: " + err.message);
@@ -61,10 +84,10 @@ export default function MenuManagement({ admin }) {
         editando.descripcion,
         editando.precio,
         editando.imagenUrl,
-        editando.activo
+        editando.activo !== false
       );
       setEditando(null);
-      cargarMenu();
+      await cargarMenu();
       alert("Item actualizado correctamente");
     } catch (err) {
       alert("Error: " + err.message);
@@ -76,7 +99,7 @@ export default function MenuManagement({ admin }) {
 
     try {
       await menuService.eliminarItem(itemId);
-      cargarMenu();
+      await cargarMenu();
       alert("Item eliminado");
     } catch (err) {
       alert("Error: " + err.message);
@@ -98,7 +121,7 @@ export default function MenuManagement({ admin }) {
           <div className={styles.cardContent}>
             {cat.items && cat.items.length > 0 ? (
               <div style={{ marginBottom: "1.5rem" }}>
-                {cat.items.filter(i => i).map((item) => (
+                {cat.items.filter((i) => i).map((item) => (
                   <div
                     key={item.id}
                     style={{
@@ -109,19 +132,32 @@ export default function MenuManagement({ admin }) {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      gap: "1rem",
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: "600", color: "var(--color-text)" }}>
-                        {item.nombre}
-                      </div>
-                      <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-                        ${item.precio} — {item.descripcion}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      {item.imagen_url ? (
+                        <img
+                          src={item.imagen_url}
+                          alt={item.nombre}
+                          style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 8 }}
+                        />
+                      ) : (
+                        <div style={{ width: 40, height: 40, display: "grid", placeItems: "center", background: "#f3f4f6", borderRadius: 8 }}>
+                          🍽️
+                        </div>
+                      )}
+                      <div>
+                        <div style={{ fontWeight: "600", color: "var(--color-text)" }}>{item.nombre}</div>
+                        <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                          ${item.precio} — {item.descripcion}
+                        </div>
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <button
-                        onClick={() => setEditando(item)}
+                        type="button"
+                        onClick={() => setEditando({ ...item, categoria_id: cat.id })}
                         style={{
                           padding: "0.5rem 1rem",
                           background: "var(--color-primary)",
@@ -135,6 +171,7 @@ export default function MenuManagement({ admin }) {
                         Editar
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleEliminarItem(item.id)}
                         style={{
                           padding: "0.5rem 1rem",
@@ -159,6 +196,15 @@ export default function MenuManagement({ admin }) {
             {editando && editando.categoria_id === cat.id ? (
               <div style={{ padding: "1rem", background: "var(--color-bg)", borderRadius: "var(--radius-sm)" }}>
                 <h4 style={{ marginBottom: "1rem" }}>Editando: {editando.nombre}</h4>
+
+                {editando.imagen_url && (
+                  <img
+                    src={editando.imagen_url}
+                    alt={editando.nombre}
+                    style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 10, marginBottom: 12 }}
+                  />
+                )}
+
                 <div className={styles.inputGrupo}>
                   <label className={styles.label}>Nombre</label>
                   <input
@@ -171,7 +217,7 @@ export default function MenuManagement({ admin }) {
                   <label className={styles.label}>Descripción</label>
                   <input
                     className={styles.input}
-                    value={editando.descripcion}
+                    value={editando.descripcion || ""}
                     onChange={(e) => setEditando({ ...editando, descripcion: e.target.value })}
                   />
                 </div>
@@ -184,8 +230,18 @@ export default function MenuManagement({ admin }) {
                     onChange={(e) => setEditando({ ...editando, precio: e.target.value })}
                   />
                 </div>
+                <div className={styles.inputGrupo}>
+                  <label className={styles.label}>Imagen del producto</label>
+                  <input
+                    className={styles.input}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/jpg"
+                    onChange={(e) => handleArchivoSeleccionado(e, setEditando)}
+                  />
+                </div>
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
                   <button
+                    type="button"
                     onClick={() => handleActualizarItem(editando.id)}
                     style={{
                       padding: "0.6rem 1.2rem",
@@ -199,6 +255,7 @@ export default function MenuManagement({ admin }) {
                     Guardar
                   </button>
                   <button
+                    type="button"
                     onClick={() => setEditando(null)}
                     style={{
                       padding: "0.6rem 1.2rem",
@@ -221,6 +278,15 @@ export default function MenuManagement({ admin }) {
               style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
             >
               <h4 style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Nuevo item</h4>
+
+              {formNuevo.imagenUrl && (
+                <img
+                  src={formNuevo.imagenUrl}
+                  alt="Vista previa"
+                  style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 10 }}
+                />
+              )}
+
               <input
                 className={styles.input}
                 placeholder="Nombre"
@@ -240,6 +306,15 @@ export default function MenuManagement({ admin }) {
                 value={formNuevo.precio}
                 onChange={(e) => setFormNuevo({ ...formNuevo, precio: e.target.value })}
               />
+              <div className={styles.inputGrupo}>
+                <label className={styles.label}>Imagen del producto</label>
+                <input
+                  className={styles.input}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  onChange={(e) => handleArchivoSeleccionado(e, setFormNuevo)}
+                />
+              </div>
               <button
                 type="submit"
                 style={{

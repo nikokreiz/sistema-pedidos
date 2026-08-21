@@ -6,6 +6,7 @@ const formatPrecio = (precio) =>
 
 export default function ItemCard({ item, cantidad, onAgregar, onQuitar }) {
   const agregado = cantidad > 0;
+  const muestraImagen = Boolean(item.imagen_url && /^(data:image|https?:)/i.test(item.imagen_url));
 
   return (
     <div className={`
@@ -15,7 +16,17 @@ export default function ItemCard({ item, cantidad, onAgregar, onQuitar }) {
     `}>
 
       {/* Imagen / Emoji */}
-      <div className={styles.imagen}>{item.imagen}</div>
+      <div className={styles.imagen}>
+        {muestraImagen ? (
+          <img
+            src={item.imagen_url}
+            alt={item.nombre}
+            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }}
+          />
+        ) : (
+          item.imagen || "🍽️"
+        )}
+      </div>
 
       {/* Contenido */}
       <div className={styles.contenido}>

@@ -14,18 +14,17 @@ const getMenu = async (comercioId) => {
     data.categorias.forEach((cat) => {
       if (cat.items && Array.isArray(cat.items)) {
         cat.items
-          .filter((item) => item && item.id) // Filtra items nulos
-          .forEach((item) => {
-            items.push({
-              id: item.id,
-              nombre: item.nombre,
-              descripcion: item.descripcion || "",
-              precio: parseFloat(item.precio) || 0,
-              imagen_url: item.imagen_url,
-              imagen: getEmoji(item.imagen_url),
-              activo: item.activo !== false,
-            });
-          });
+            .filter((item) => item && item.id)
+            .forEach((item) => {
+              const imagenUrl = item.imagen_url || "";
+              items.push({
+                id: item.id,
+                categoria_id: item.categoria_id || cat.id,
+                nombre: item.nombre,
+                descripcion: item.descripcion || "",
+                precio: parseFloat(item.precio) || 0,
+                imagen_url: imagenUrl,
+                imagen: imagenUrl || getEmoji(item.imagen_url),
       }
     });
 
