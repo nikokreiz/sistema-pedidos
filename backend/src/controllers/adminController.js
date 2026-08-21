@@ -108,4 +108,44 @@ const verificarLocalAbierto = async (req, res, next) => {
   }
 };
 
-module.exports = { loginAdmin, getHorarios, actualizarHorario, verificarLocalAbierto };
+const getEstadisticasHoy = async (req, res, next) => {
+  try {
+    const { comercioId } = req.params;
+    
+    // Pedidos de hoy
+    const pedidosResult = await pool.query(
+      `SELECT COUNT(*) as total_pedidos, COALESCE(SUM(total), 0) as ingresos
+       FROM pedidos p
+       JOIN mesas m ON p.mesa_id = m.id
+       JOIN sucursales s ON m.sucursal_id = s.id
+       WHERE s.comercio_id = $1 
+         AND DATE(p.creado_en) = CURRENT_DATE
+         AND p.estado = 'entregado'`,
+      [comercioId]
+    );
+
+    // Mesas ocupadas ahora
+    const mesasResult = await pool.query(
+      `SELECT COUNT(DISTINCT m.id) as mesas_ocupadas
+       FROM mesas m
+       JOIN sucursales s ON m.sucursal_id = s.id
+       LEFT JOIN pedidos p ON p.mesa_id = m.id AND p.estado NOT IN ('entregado', 'pagado')
+       WHERE s.comercio_id = $1 AND p.id IS NOT NULL`,
+      [comercioId]
+    );
+
+    const pedidos = pedidosResult.rows[0];
+    const mesas = mesasResult.rows[0];
+
+    res.json({
+      ok: true,
+      totalPedidos: parseInt(pedidos.total_pedidos) || 0,
+      ingresos: parseFloat(pedidos.ingresos) || 0,
+      mesasOcupadas: parseInt(mesas.mesas_ocupadas) || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { loginAdmin, getHorarios, actualizarHorario, verificarLocalAbierto, getEstadisticasHoy };

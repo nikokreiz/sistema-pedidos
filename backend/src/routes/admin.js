@@ -6,5 +6,6 @@ router.post("/login", adminController.loginAdmin);
 router.get("/horarios/:comercioId", adminController.getHorarios);
 router.put("/horarios/:comercioId/:diaSemana", adminController.actualizarHorario);
 router.get("/verificar-abierto/:comercioId", adminController.verificarLocalAbierto);
+router.get("/estadisticas/:comercioId", adminController.getEstadisticasHoy);
 
 module.exports = router;

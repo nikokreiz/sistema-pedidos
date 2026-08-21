@@ -8,11 +8,13 @@ const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "
 export default function Dashboard({ admin, onLogout }) {
   const [tabActiva, setTabActiva] = useState("dashboard");
   const [horarios, setHorarios] = useState([]);
+  const [stats, setStats] = useState({ totalPedidos: 0, ingresos: 0, mesasOcupadas: 0 });
   const [cargando, setCargando] = useState(false);
 
-  // Carga horarios al montar el componente
+  // Carga datos al montar el componente
   useEffect(() => {
     cargarHorarios();
+    cargarEstadisticas();
   }, [admin.comercioId]);
 
   const cargarHorarios = async () => {
@@ -26,6 +28,18 @@ export default function Dashboard({ admin, onLogout }) {
       setCargando(false);
     }
   };
+
+  const cargarEstadisticas = async () => {
+    try {
+      const data = await api.get(`/admin/estadisticas/${admin.comercioId}`);
+      setStats(data);
+    } catch (err) {
+      console.error("Error cargando estadísticas:", err.message);
+    }
+  };
+
+  const formatPrecio = (precio) =>
+    precio.toLocaleString("es-CL", { style: "currency", currency: "CLP" });
 
   return (
     <div className={styles.page}>
@@ -88,19 +102,25 @@ export default function Dashboard({ admin, onLogout }) {
                 <div className={styles.cardHeader}>
                   <span className={styles.cardTitulo}>Pedidos Hoy</span>
                 </div>
-                <div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-primary)" }}>0</div>
+                <div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-primary)" }}>
+                  {stats.totalPedidos}
+                </div>
               </div>
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
                   <span className={styles.cardTitulo}>Ingresos</span>
                 </div>
-                <div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-success)" }}>$0</div>
+                <div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-success)" }}>
+                  {formatPrecio(stats.ingresos)}
+                </div>
               </div>
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
                   <span className={styles.cardTitulo}>Mesas Ocupadas</span>
                 </div>
-                <div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-warning)" }}>0</div>
+                <div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-warning)" }}>
+                  {stats.mesasOcupadas}
+                </div>
               </div>
             </div>
           </div>
