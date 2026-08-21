@@ -12,7 +12,7 @@ function App() {
         <Route path="/"             element={<QRLanding />} />
 
         {/* Pantalla 2: Menú */}
-        <Route path="/menu/:mesaId" element={<Menu />} />
+        <Route path="/menu/:mesaNumero" element={<Menu />} />
 
         {/* Pantalla 3: Resumen pedido */}
         <Route path="/resumen"      element={<ResumenPedido />} />

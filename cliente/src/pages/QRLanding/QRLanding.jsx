@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import styles from "./QRLanding.module.css";
 import { COMERCIO } from "../../constants/comercio";
@@ -13,11 +13,18 @@ const STEPS = {
 export default function QRLanding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const timeoutRef = useRef(null);
   
   const [step, setStep]         = useState(STEPS.BIENVENIDA);
   const [mesa, setMesa]         = useState("");
   const [error, setError]       = useState("");
   const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   // Detecta si vino del QR
   useEffect(() => {
@@ -41,8 +48,9 @@ export default function QRLanding() {
         return;
       }
       
+      setMesa(String(mesaData.numero));
       setStep(STEPS.EXITO);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         navigate(`/menu/${mesaData.numero}`, {
           state: {
             mesaId:     mesaData.id,
@@ -58,46 +66,56 @@ export default function QRLanding() {
   };
 
   const handleConfirmar = async () => {
-    const num = parseInt(mesa);
-    if (!mesa || isNaN(num)) {
-      setError("Por favor ingresa un numero de mesa valido.");
+  const num = parseInt(mesa);
+  if (!mesa || isNaN(num)) {
+    setError("Por favor ingresa un numero de mesa valido.");
+    return;
+  }
+
+  setError("");
+  setCargando(true);
+
+  try {
+    // Primero intenta con QR único
+    const qrCodeUnico = `mesa-${num}`;
+    let mesaData;
+    
+    try {
+      mesaData = await mesaService.verificarMesaPorQR(qrCodeUnico);
+    } catch (err) {
+      // Si falla, intenta con QR clásico
+      const qrCodigo = `QR-MESA-${String(num).padStart(3, "0")}`;
+      mesaData = await mesaService.verificarMesa(qrCodigo);
+    }
+
+    // Verifica si el local está abierto
+    const estadoLocal = await mesaService.verificarLocalAbierto(mesaData.comercio_id);
+    
+    if (!estadoLocal.abierto) {
+      setError(`Local cerrado. Abierto de ${estadoLocal.hora_apertura} a ${estadoLocal.hora_cierre}`);
+      setCargando(false);
       return;
     }
 
-    setError("");
-    setCargando(true);
+    setMesa(String(mesaData.numero ?? num));
+    setStep(STEPS.EXITO);
 
-    try {
-      const qrCodigo = `QR-MESA-${String(num).padStart(3, "0")}`;
-      const mesaData = await mesaService.verificarMesa(qrCodigo);
+    timeoutRef.current = setTimeout(() => {
+      navigate(`/menu/${mesaData.numero}`, {
+        state: {
+          mesaId:     mesaData.id,
+          mesaNumero: mesaData.numero,
+          comercioId: mesaData.comercio_id,
+        },
+      });
+    }, 1500);
 
-      // Verifica si el local está abierto
-      const estadoLocal = await mesaService.verificarLocalAbierto(mesaData.comercio_id);
-      
-      if (!estadoLocal.abierto) {
-        setError(`Local cerrado. Abierto de ${estadoLocal.hora_apertura} a ${estadoLocal.hora_cierre}`);
-        setCargando(false);
-        return;
-      }
-
-      setStep(STEPS.EXITO);
-
-      setTimeout(() => {
-        navigate(`/menu/${mesaData.numero}`, {
-          state: {
-            mesaId:     mesaData.id,
-            mesaNumero: mesaData.numero,
-            comercioId: mesaData.comercio_id,
-          },
-        });
-      }, 1500);
-
-    } catch (err) {
-      setError(`La mesa ${num} no existe en este local.`);
-    } finally {
-      setCargando(false);
-    }
-  };
+  } catch (err) {
+    setError(`La mesa ${num} no existe en este local.`);
+  } finally {
+    setCargando(false);
+  }
+};
 
   const handleSeleccionarMesa = (num) => {
     setMesa(String(num));

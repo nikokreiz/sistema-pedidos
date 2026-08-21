@@ -235,11 +235,19 @@ export default function Pago() {
   const {
     pedido     = {},
     mesaId     = "?",
+    mesaNumero,
     metodoPago = "online",
     nota       = "",
     total      = 0,
     items      = [],
   } = location.state || {};
+
+  const numeroMesa =
+    Number.isFinite(Number(mesaNumero)) && Number(mesaNumero) > 0
+      ? Number(mesaNumero)
+      : Number.isFinite(Number(mesaId)) && Number(mesaId) > 0
+        ? Number(mesaId)
+        : null;
 
   const [procesando, setProcesando] = useState(false);
   const [exitoso, setExitoso]       = useState(false);
@@ -251,8 +259,12 @@ export default function Pago() {
     setError("");
 
     try {
+      if (!numeroMesa) {
+        throw new Error("La mesa seleccionada es inválida.");
+      }
+
       await pedidosService.crearPedido({
-        mesaNumero: parseInt(mesaId),
+        mesaNumero: numeroMesa,
         items,
         pedido,
         metodoPago,

@@ -33,14 +33,25 @@ const METODOS_PAGO = [
 ];
 
 export default function ResumenPedido() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const { pedido: pedidoInicial = {}, mesaId = "?", items: itemsMenu = [] } = location.state || {};
+  const {
+    pedido: pedidoInicial = {},
+    mesaId = "?",
+    mesaNumero,
+    items: itemsMenu = [],
+  } = location.state || {};
 
+  const numeroMesa =
+    Number.isFinite(Number(mesaNumero)) && Number(mesaNumero) > 0
+      ? Number(mesaNumero)
+      : Number.isFinite(Number(mesaId)) && Number(mesaId) > 0
+        ? Number(mesaId)
+        : "?";
 
   const [pedido, setPedido] = useState(pedidoInicial);
-  const [nota, setNota]     = useState("");
+  const [nota, setNota] = useState("");
 
   // ── Items con detalle ───────────────────────────────────────────────────────
   const itemsConDetalle = Object.entries(pedido)
@@ -72,10 +83,18 @@ export default function ResumenPedido() {
 
   // ── Confirmar pedido ────────────────────────────────────────────────────────
   const confirmarPedido = (metodoPago) => {
-  navigate("/pago", {
-    state: { pedido, mesaId, metodoPago, nota, total, items: itemsMenu },
-  });
-};
+    navigate("/pago", {
+      state: {
+        pedido,
+        mesaId,
+        mesaNumero: numeroMesa,
+        metodoPago,
+        nota,
+        total,
+        items: itemsMenu,
+      },
+    });
+  };
 
   // ── Carrito vacío ───────────────────────────────────────────────────────────
   if (itemsConDetalle.length === 0) {
@@ -95,7 +114,7 @@ export default function ResumenPedido() {
           </p>
           <button
             className={styles.btnVolverMenu}
-            onClick={() => navigate(`/menu/${mesaId}`)}
+            onClick={() => navigate(`/menu/${numeroMesa}`, { state: { mesaNumero: numeroMesa, mesaId, comercioId: location.state?.comercioId } })}
           >
             ← Volver al menú
           </button>
@@ -113,7 +132,7 @@ export default function ResumenPedido() {
           ← Volver
         </button>
         <h1 className={styles.headerTitulo}>Tu pedido</h1>
-        <span className={styles.headerMesa}>Mesa #{mesaId}</span>
+        <span className={styles.headerMesa}>Mesa #{numeroMesa}</span>
       </div>
 
       <div className={styles.contenido}>
