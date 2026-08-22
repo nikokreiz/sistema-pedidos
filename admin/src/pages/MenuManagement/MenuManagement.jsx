@@ -4,6 +4,11 @@ import { menuService } from "../../services/menuService";
 
 const leerArchivoComoDataUrl = (file) =>
   new Promise((resolve, reject) => {
+    if (file.size > 7 * 1024 * 1024) {
+      reject(new Error("La imagen no puede superar los 7 MB"));
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(new Error("No se pudo leer la imagen"));

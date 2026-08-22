@@ -3,6 +3,7 @@ import styles from "./Dashboard.module.css";
 import Horarios from "../../components/ui/Horarios/Horarios";
 import MenuManagement from "../MenuManagement/MenuManagement";
 import api from "../../services/api";
+import MesasManagement from "../MesasManagement/MesasManagement";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -136,10 +137,7 @@ export default function Dashboard({ admin, onLogout }) {
         )}
 
         {tabActiva === "mesas" && (
-          <div className={styles.seccion}>
-            <h2 className={styles.seccionTitulo}>Gestión de Mesas</h2>
-            <p style={{ color: "var(--color-text-muted)" }}>Próximamente...</p>
-          </div>
+          <MesasManagement admin={admin} />
         )}
 
         {tabActiva === "garzones" && (
