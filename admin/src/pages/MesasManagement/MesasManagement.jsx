@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import styles from "../Dashboard/Dashboard.module.css";
 import { mesasService } from "../../services/mesasService";
+import { qrService } from "../../services/qrService";
 
 export default function MesasManagement({ admin }) {
   const [mesas, setMesas] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [editando, setEditando] = useState(null);
+  const [mostrando, setMostrando] = useState(null);
   const [formNuevo, setFormNuevo] = useState({
     numero: "",
     capacidad: "",
@@ -18,8 +20,6 @@ export default function MesasManagement({ admin }) {
   const cargarMesas = async () => {
     setCargando(true);
     try {
-      // Asumimos que el admin tiene una sucursal fija
-      // En producción, permitir seleccionar sucursal
       const sucursalId = "a1b2c3d4-0000-0000-0000-000000000002";
       const data = await mesasService.obtenerMesas(sucursalId);
       setMesas(data);
@@ -34,6 +34,12 @@ export default function MesasManagement({ admin }) {
     e.preventDefault();
     if (!formNuevo.numero || !formNuevo.capacidad) {
       alert("Número y capacidad requeridos");
+      return;
+    }
+
+    // Validar que no exista mesa con ese número
+    if (mesas.some((m) => m.numero === parseInt(formNuevo.numero))) {
+      alert(`Ya existe una mesa número ${formNuevo.numero}`);
       return;
     }
 
@@ -76,11 +82,88 @@ export default function MesasManagement({ admin }) {
     }
   };
 
+  const handleDescargarQR = async (mesa) => {
+    try {
+      await qrService.descargarQR(mesa.numero, mesa.qr_codigo_unico);
+    } catch (err) {
+      alert("Error descargando QR: " + err.message);
+    }
+  };
+
+  const handleMostrarQR = async (mesa) => {
+    try {
+      const qrDataUrl = await qrService.generarQR(mesa.numero, mesa.qr_codigo_unico);
+      setMostrando({ ...mesa, qrDataUrl });
+    } catch (err) {
+      alert("Error generando QR: " + err.message);
+    }
+  };
+
   if (cargando) return <div className={styles.seccion}>Cargando mesas...</div>;
 
   return (
     <div className={styles.seccion}>
       <h2 className={styles.seccionTitulo}>Gestión de Mesas</h2>
+
+      {mostrando && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setMostrando(null)}
+        >
+          <div
+            style={{
+              background: "var(--color-surface)",
+              padding: "2rem",
+              borderRadius: "var(--radius-lg)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: "1rem", color: "var(--color-text)" }}>
+              QR Mesa #{mostrando.numero}
+            </h3>
+            <img src={mostrando.qrDataUrl} alt="QR" style={{ marginBottom: "1rem" }} />
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <button
+                onClick={() => handleDescargarQR(mostrando)}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "var(--color-success)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                }}
+              >
+                ⬇ Descargar
+              </button>
+              <button
+                onClick={() => setMostrando(null)}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.card} style={{ marginBottom: "2rem" }}>
         <div className={styles.cardHeader}>
@@ -108,13 +191,27 @@ export default function MesasManagement({ admin }) {
                       Mesa #{mesa.numero}
                     </div>
                     <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-                      Capacidad: {mesa.capacidad} personas — QR: {mesa.qr_codigo_unico}
+                      Capacidad: {mesa.capacidad} personas
                     </div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-                      Estado: {mesa.activa ? "Activa" : "Inactiva"}
+                    <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "0.3rem" }}>
+                      QR: {mesa.qr_codigo_unico}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button
+                      onClick={() => handleMostrarQR(mesa)}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        background: "var(--color-warning)",
+                        color: "#000",
+                        border: "none",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      📱 QR
+                    </button>
                     <button
                       onClick={() => setEditando(mesa)}
                       style={{
@@ -127,7 +224,7 @@ export default function MesasManagement({ admin }) {
                         fontSize: "0.8rem",
                       }}
                     >
-                      Editar
+                      ✏ Editar
                     </button>
                     <button
                       onClick={() => handleEliminarMesa(mesa.id)}
@@ -141,7 +238,7 @@ export default function MesasManagement({ admin }) {
                         fontSize: "0.8rem",
                       }}
                     >
-                      Eliminar
+                      🗑 Eliminar
                     </button>
                   </div>
                 </div>
@@ -184,7 +281,7 @@ export default function MesasManagement({ admin }) {
                     cursor: "pointer",
                   }}
                 >
-                  Guardar
+                  ✓ Guardar
                 </button>
                 <button
                   onClick={() => setEditando(null)}
@@ -196,7 +293,7 @@ export default function MesasManagement({ admin }) {
                     cursor: "pointer",
                   }}
                 >
-                  Cancelar
+                  ✕ Cancelar
                 </button>
               </div>
             </div>
