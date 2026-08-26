@@ -15,8 +15,8 @@ export default function MesaCard({ mesa, onEntregado }) {
   const handleEntregado = async () => {
   setCargando(true);
   try {
-    await api.put(`/garzones/${mesa.id}/entregado`);
-    onEntregado(mesa.id);
+    await api.put(`/garzones/${mesa.pedido_id}/entregado`);
+    onEntregado(mesa.pedido_id);
   } catch (err) {
     console.error("Error:", err.message);
   } finally {

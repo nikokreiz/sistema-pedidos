@@ -11,19 +11,19 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
 
   // Cargar mesas asignadas del garzon
   useEffect(() => {
-    const cargarMesas = async () => {
-      try {
-        const data = await api.get(`/garzones/${garzon.id}/mesas`);
-        setMesas(data.mesas || []);
-      } catch (err) {
-        console.error("Error cargando mesas:", err.message);
-      } finally {
-        setCargando(false);
-      }
-    };
-
     cargarMesas();
   }, [garzon.id]);
+
+  const cargarMesas = async () => {
+    try {
+      const data = await api.get(`/garzones/${garzon.id}/mesas`);
+      setMesas(data.mesas || []);
+    } catch (err) {
+      console.error("Error cargando mesas:", err.message);
+    } finally {
+      setCargando(false);
+    }
+  };
 
   // Escuchar notificaciones en tiempo real
   useEffect(() => {
@@ -38,7 +38,6 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
           tipo: "exito",
         });
 
-        // Auto-remove despues de 5 segundos
         setTimeout(() => setNotificacion(null), 5000);
       }
     });
@@ -46,31 +45,51 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
     return () => socket.off("pedido_listo");
   }, [socket]);
 
-  const handleEntregado = (mesaId) => {
+  // Escuchar actualizaciones de pedidos
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("pedido_actualizado", async (data) => {
+      console.log("Recargando mesas por actualización:", data);
+      cargarMesas();
+    });
+
+    return () => socket.off("pedido_actualizado");
+  }, [socket]);
+
+  // Escuchar cambios en mesas
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("mesa_creada", (data) => {
+      console.log("Nueva mesa creada:", data);
+      cargarMesas();
+    });
+
+    socket.on("mesa_actualizada", (data) => {
+      console.log("Mesa actualizada:", data);
+      cargarMesas();
+    });
+
+    socket.on("mesa_eliminada", (data) => {
+      console.log("Mesa eliminada:", data);
+      cargarMesas();
+    });
+
+    return () => {
+      socket.off("mesa_creada");
+      socket.off("mesa_actualizada");
+      socket.off("mesa_eliminada");
+    };
+  }, [socket]);
+
+  const handleEntregado = (pedidoId) => {
     setMesas((prev) =>
       prev.map((m) =>
-        m.id === mesaId ? { ...m, estado: "limpia" } : m
+        m.pedido_id === pedidoId ? { ...m, estado: "limpia" } : m
       )
     );
   };
-
-// Escuchar cuando cocina marca pedido como listo
-useEffect(() => {
-  if (!socket) return;
-
-  socket.on("pedido_actualizado", async (data) => {
-    console.log("Recargando mesas por actualización:", data);
-    // Recarga las mesas
-    try {
-      const response = await api.get(`/garzones/${garzon.id}/mesas`);
-      setMesas(response.mesas || []);
-    } catch (err) {
-      console.error("Error recargando mesas:", err.message);
-    }
-  });
-
-  return () => socket.off("pedido_actualizado");
-}, [socket, garzon.id]);
 
   if (cargando) {
     return (

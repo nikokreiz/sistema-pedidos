@@ -7,6 +7,9 @@ import { ITEMS_MENU } from "../../constants/menu";
 const formatPrecio = (precio) =>
   precio.toLocaleString("es-CL", { style: "currency", currency: "CLP" });
 
+const esImagen = (valor) =>
+  typeof valor === "string" && /^(data:image|https?:)/i.test(valor);
+
 // ─── Métodos de pago ──────────────────────────────────────────────────────────
 const METODOS_PAGO = [
   {
@@ -147,7 +150,13 @@ export default function ResumenPedido() {
             <div key={item.id} className={styles.itemFila}>
 
               {/* Emoji */}
-              <div className={styles.itemEmoji}>{item.imagen}</div>
+              <div className={styles.itemEmoji}>
+                {esImagen(item.imagen_url) ? (
+                  <img className={styles.itemImagen} src={item.imagen_url} alt="" />
+                ) : (
+                  item.imagen || "🍽️"
+                )}
+              </div>
 
               {/* Info */}
               <div className={styles.itemInfo}>

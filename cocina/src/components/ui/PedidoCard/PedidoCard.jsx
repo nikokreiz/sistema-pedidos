@@ -16,6 +16,13 @@ const ESTADOS = {
   listo:      { label: "Listo",      badge: styles.badgeListo,      card: styles.cardListo      },
 };
 
+const esBebida = (item) => {
+  const categoria = (item.categoria_nombre || "").toLowerCase();
+  return ["trago", "cerveza", "sin alcohol", "bebida"].some((tipo) =>
+    categoria.includes(tipo)
+  );
+};
+
 export default function PedidoCard({ pedido, onEstadoCambiado }) {
   const [cargando, setCargando] = useState(false);
   const estado = ESTADOS[pedido.estado] || ESTADOS.pendiente;
@@ -51,7 +58,7 @@ export default function PedidoCard({ pedido, onEstadoCambiado }) {
       {/* Items */}
       <div className={styles.items}>
         {pedido.items?.map((item, i) => (
-          <div key={i} className={styles.item}>
+          <div key={i} className={`${styles.item} ${esBebida(item) ? styles.itemBebida : styles.itemComida}`}>
             <span className={styles.itemCantidad}>x{item.cantidad}</span>
             <span className={styles.itemNombre}>{item.nombre}</span>
           </div>

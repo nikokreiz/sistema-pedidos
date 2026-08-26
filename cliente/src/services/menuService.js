@@ -1,6 +1,15 @@
 import api from "./api";
 import { getEmoji } from "../constants/emojiMap";
 
+const normalizarImagen = (valor) => {
+  const imagen = typeof valor === "string" ? valor.trim() : "";
+  if (/^(data:image|https?:)/i.test(imagen)) return imagen;
+  if (imagen.length > 100 && /^[A-Za-z0-9+/]+={0,2}$/.test(imagen)) {
+    return `data:image/jpeg;base64,${imagen}`;
+  }
+  return "";
+};
+
 const getMenu = async (comercioId) => {
   try {
     const data = await api.get(`/menu/${comercioId}`);
@@ -15,7 +24,7 @@ const getMenu = async (comercioId) => {
         cat.items
           .filter((item) => item && item.id)
           .forEach((item) => {
-            const imagenUrl = item.imagen_url || "";
+            const imagenUrl = normalizarImagen(item.imagen_url);
             items.push({
               id: item.id,
               categoria_id: item.categoria_id || cat.id,

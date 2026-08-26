@@ -39,6 +39,11 @@ const verificarMesaPorQR = async (qrCode) => {
   return data.mesa;
 };
 
+const verificarMesaPorNumero = async (numero) => {
+  const data = await api.get(`/mesas/numero/${numero}`);
+  return data.mesa;
+};
+
 const getMesas = async (sucursalId) => {
   const data = await api.get(`/mesas/${sucursalId}`);
   return data.mesas;
@@ -53,6 +58,7 @@ export const mesaService = {
   getMenu, 
   verificarMesa,
   verificarMesaPorQR, 
+  verificarMesaPorNumero,
   getMesas,
   verificarLocalAbierto
 };

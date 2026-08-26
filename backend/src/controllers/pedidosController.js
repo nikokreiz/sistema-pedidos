@@ -55,13 +55,16 @@ const crearPedido = async (req, res, next) => {
 
     for (const item of items) {
       const itemResult = await client.query(
-        `SELECT id, nombre, precio FROM items_menu WHERE id = $1`,
+        `SELECT im.id, im.nombre, im.precio, cm.nombre AS categoria_nombre
+         FROM items_menu im
+         LEFT JOIN categorias_menu cm ON cm.id = im.categoria_id
+         WHERE im.id = $1`,
         [item.item_id]
       );
 
       if (itemResult.rows.length === 0) continue;
 
-      const { precio, nombre } = itemResult.rows[0];
+      const { precio, nombre, categoria_nombre } = itemResult.rows[0];
       const subtotal = parseFloat(precio) * item.cantidad;
       total += subtotal;
 
@@ -71,7 +74,7 @@ const crearPedido = async (req, res, next) => {
         [pedidoId, item.item_id, item.cantidad, precio, nota || null]
       );
 
-      itemsDetalle.push({ nombre, cantidad: item.cantidad, precio });
+      itemsDetalle.push({ nombre, cantidad: item.cantidad, precio, categoria_nombre });
     }
 
     await client.query(
@@ -87,6 +90,7 @@ const crearPedido = async (req, res, next) => {
       mesaNumero: mesa_numero,
       items: itemsDetalle,
       metodoPago: metodo_pago,
+      nota: nota || "",
       total,
     });
 
@@ -163,16 +167,19 @@ const getPedidosActivos = async (req, res, next) => {
     const result = await pool.query(
       `SELECT p.id, p.estado, p.metodo_pago, p.total,
               p.creado_en, m.numero AS mesa_numero,
+              COALESCE(MAX(ip.notas), '') AS nota,
               json_agg(json_build_object(
-                'nombre',   im.nombre,
-                'cantidad', ip.cantidad
+                'nombre',           im.nombre,
+                'cantidad',         ip.cantidad,
+                'categoria_nombre', cm.nombre
               )) AS items
        FROM pedidos p
        JOIN mesas m        ON m.id = p.mesa_id
        JOIN items_pedido ip ON ip.pedido_id = p.id
        JOIN items_menu   im ON im.id = ip.item_menu_id
+      LEFT JOIN categorias_menu cm ON cm.id = im.categoria_id
        WHERE p.estado NOT IN ('entregado','pagado')
-       GROUP BY p.id, m.numero
+      GROUP BY p.id, m.numero
        ORDER BY p.creado_en ASC`
     );
     res.json({ ok: true, pedidos: result.rows });

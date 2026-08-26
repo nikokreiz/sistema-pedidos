@@ -5,7 +5,7 @@ const getMesasGarzon = async (req, res, next) => {
     const { garzonId } = req.params;
 
     const result = await pool.query(
-      `SELECT m.id, m.numero,
+      `SELECT m.id, m.numero, p.id AS pedido_id,
               CASE 
                 WHEN p.estado = 'listo' THEN 'lista'
                 WHEN p.id IS NOT NULL THEN 'ocupada'
@@ -16,15 +16,16 @@ const getMesasGarzon = async (req, res, next) => {
                  FROM pedidos p2
                  LEFT JOIN items_pedido ip ON ip.pedido_id = p2.id
                  LEFT JOIN items_menu im ON im.id = ip.item_menu_id
-                 WHERE p2.mesa_id = m.id AND p2.estado NOT IN ('pagado', 'entregado')
+                 WHERE p2.id = p.id
                  LIMIT 1),
                 '[]'::json
               ) AS items
-       FROM mesas m
-       LEFT JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.activo = true
+      FROM mesas m
+      JOIN garzones g ON g.sucursal_id = m.sucursal_id AND g.id = $1
        LEFT JOIN pedidos p ON p.mesa_id = m.id AND p.estado NOT IN ('pagado', 'entregado')
-       WHERE ag.garzon_id = $1
-       GROUP BY m.id, m.numero, p.id, p.estado`,
+      WHERE m.activa = true
+      GROUP BY m.id, m.numero, p.id, p.estado
+      ORDER BY m.numero ASC`,
       [garzonId]
     );
 
@@ -55,15 +56,13 @@ const llamarAuxilio = async (req, res, next) => {
 
 const marcarEntregado = async (req, res, next) => {
   try {
-    const { mesaId } = req.params;
+    const { pedidoId } = req.params;
 
-    // Busca cualquier pedido activo (no pagado, no entregado)
+    // Busca el pedido activo específico que se está entregando
     const pedidoResult = await pool.query(
       `SELECT p.id FROM pedidos p
-       WHERE p.mesa_id = $1 AND p.estado IN ('listo', 'preparando', 'pendiente')
-       ORDER BY p.creado_en DESC
-       LIMIT 1`,
-      [mesaId]
+       WHERE p.id = $1 AND p.estado IN ('listo', 'preparando', 'pendiente')`,
+      [pedidoId]
     );
 
     if (pedidoResult.rows.length === 0) {
@@ -72,8 +71,6 @@ const marcarEntregado = async (req, res, next) => {
         mensaje: "No hay pedido activo en esta mesa" 
       });
     }
-
-    const pedidoId = pedidoResult.rows[0].id;
 
     // Marca como entregado
     const updateResult = await pool.query(
@@ -92,7 +89,7 @@ const marcarEntregado = async (req, res, next) => {
     }
 
     const io = req.app.get("io");
-    io.emit("pedido_entregado", { pedidoId, mesaId });
+    io.emit("pedido_entregado", { pedidoId });
 
     res.json({ ok: true, mensaje: "Pedido entregado correctamente" });
   } catch (err) {

@@ -37,6 +37,7 @@
   font-size: 1.2rem;
   color: var(--color-text);
   flex: 1;
+  min-width: 0;
 }
 
 .headerMesa {
@@ -79,7 +80,8 @@
 
 /* ── Fila de item ─────────────────────────────────────────── */
 .itemFila {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.85rem;
   padding: 0.9rem 1.1rem;
@@ -102,6 +104,13 @@
   flex-shrink: 0;
 }
 
+.itemImagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .itemInfo {
   flex: 1;
   min-width: 0;
@@ -114,6 +123,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .itemPrecioUnit {
@@ -280,23 +290,52 @@
 
 .metodoTexto {
   flex: 1;
+  min-width: 0;
 }
 
 .metodoNombre {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--color-text);
+  overflow-wrap: anywhere;
 }
 
 .metodoDesc {
   font-size: 0.73rem;
   color: var(--color-text-muted);
   margin-top: 0.15rem;
+  overflow-wrap: anywhere;
 }
 
 .metodoFlecha {
   color: var(--color-text-dim);
   font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .headerTitulo {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .itemFila {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 0.65rem;
+  }
+
+  .itemSubtotal {
+    grid-column: 2 / -1;
+    justify-self: end;
+  }
+
+  .metodoBtn {
+    align-items: flex-start;
+  }
 }
 
 /* ── Colores por método ───────────────────────────────────── */
