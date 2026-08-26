@@ -54,11 +54,17 @@ const verificarLocalAbierto = async (comercioId) => {
   return data;
 };
 
+const solicitarGarzon = async (mesaId) => {
+  const data = await api.post(`/mesas/${mesaId}/solicitar-garzon`);
+  return data;
+};
+
 export const mesaService = { 
   getMenu, 
   verificarMesa,
   verificarMesaPorQR, 
   verificarMesaPorNumero,
   getMesas,
-  verificarLocalAbierto
+  verificarLocalAbierto,
+  solicitarGarzon
 };

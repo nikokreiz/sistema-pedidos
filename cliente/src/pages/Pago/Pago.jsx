@@ -236,6 +236,7 @@ export default function Pago() {
     pedido     = {},
     mesaId     = "?",
     mesaNumero,
+    garzonNombre,
     metodoPago = "online",
     nota       = "",
     total      = 0,
@@ -265,6 +266,7 @@ export default function Pago() {
 
       await pedidosService.crearPedido({
         mesaNumero: numeroMesa,
+        garzonNombre,
         items,
         pedido,
         metodoPago,

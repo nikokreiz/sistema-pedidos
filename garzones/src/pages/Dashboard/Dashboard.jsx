@@ -4,9 +4,14 @@ import MesaCard from "../../components/ui/MesaCard/MesaCard";
 import Notificacion from "../../components/Notificacion/Notificacion";
 import api from "../../services/api";
 
+const ALERTA_SOLICITUD_KEY = "solicitud_garzon_pendiente";
+
 export default function Dashboard({ garzon, socket, conectado, onLogout }) {
   const [mesas, setMesas]           = useState([]);
-  const [notificacion, setNotificacion] = useState(null);
+  const [notificacion, setNotificacion] = useState(() => {
+    const alertaGuardada = sessionStorage.getItem(ALERTA_SOLICITUD_KEY);
+    return alertaGuardada ? JSON.parse(alertaGuardada) : null;
+  });
   const [cargando, setCargando]     = useState(true);
 
   // Cargar mesas asignadas del garzon
@@ -44,6 +49,26 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
 
     return () => socket.off("pedido_listo");
   }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const recibirSolicitud = (data) => {
+      if (String(data.garzonId) !== String(garzon.id)) return;
+      const alerta = {
+        id: Date.now(),
+        titulo: `Mesa ${data.mesaNumero}`,
+        mensaje: "El cliente solicita atención.",
+        tipo: "exito",
+        persistente: true,
+      };
+      sessionStorage.setItem(ALERTA_SOLICITUD_KEY, JSON.stringify(alerta));
+      setNotificacion(alerta);
+    };
+
+    socket.on("solicitud_garzon", recibirSolicitud);
+    return () => socket.off("solicitud_garzon", recibirSolicitud);
+  }, [socket, garzon.id]);
 
   // Escuchar actualizaciones de pedidos
   useEffect(() => {
@@ -91,6 +116,12 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
     );
   };
 
+  const handleEstadoMesa = (mesaId, estado) => {
+    setMesas((prev) => prev.map((mesa) =>
+      mesa.id === mesaId ? { ...mesa, estado, estado_mesa: estado } : mesa
+    ));
+  };
+
   if (cargando) {
     return (
       <div className={styles.page}>
@@ -135,7 +166,9 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
             <MesaCard
               key={mesa.id}
               mesa={mesa}
+              garzonId={garzon.id}
               onEntregado={handleEntregado}
+              onEstadoMesa={handleEstadoMesa}
             />
           ))}
         </div>
@@ -147,6 +180,11 @@ export default function Dashboard({ garzon, socket, conectado, onLogout }) {
           titulo={notificacion.titulo}
           mensaje={notificacion.mensaje}
           tipo={notificacion.tipo}
+          persistente={notificacion.persistente}
+          onResolver={() => {
+            sessionStorage.removeItem(ALERTA_SOLICITUD_KEY);
+            setNotificacion(null);
+          }}
         />
       )}
 

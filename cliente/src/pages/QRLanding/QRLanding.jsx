@@ -6,6 +6,7 @@ import { COMERCIO } from "../../constants/comercio";
 import { mesaService } from "../../services/mesaService";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
+const SUCURSAL_ID = "a1b2c3d4-0000-0000-0000-000000000002";
 
 const STEPS = {
   BIENVENIDA: "bienvenida",
@@ -19,6 +20,7 @@ export default function QRLanding() {
   
   const [step, setStep] = useState(STEPS.BIENVENIDA);
   const [mesa, setMesa] = useState("");
+  const [mesasDisponibles, setMesasDisponibles] = useState([]);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -32,17 +34,40 @@ export default function QRLanding() {
 
     socket.on("mesa_creada", (data) => {
       console.log("Nueva mesa creada:", data);
+      if (data.activa !== false) {
+        setMesasDisponibles((mesasActuales) => [...mesasActuales, data].sort((a, b) => a.numero - b.numero));
+      }
     });
 
     socket.on("mesa_actualizada", (data) => {
       console.log("Mesa actualizada:", data);
+      setMesasDisponibles((mesasActuales) => {
+        const mesasActualizadas = mesasActuales
+          .map((mesaActual) => mesaActual.id === data.id ? { ...mesaActual, ...data } : mesaActual)
+          .filter((mesaActual) => mesaActual.activa !== false);
+        return mesasActualizadas.sort((a, b) => a.numero - b.numero);
+      });
     });
 
     socket.on("mesa_eliminada", (data) => {
       console.log("Mesa eliminada:", data);
+      setMesasDisponibles((mesasActuales) => mesasActuales.filter((mesaActual) => mesaActual.id !== data.mesaId));
     });
 
     return () => socket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const cargarMesas = async () => {
+      try {
+        const mesas = await mesaService.getMesas(SUCURSAL_ID);
+        setMesasDisponibles(mesas.filter((mesaDisponible) => mesaDisponible.activa !== false));
+      } catch (err) {
+        console.error("Error cargando mesas disponibles:", err.message);
+      }
+    };
+
+    cargarMesas();
   }, []);
 
   const buscarMesaPorQR = async (qrCode) => {
@@ -66,6 +91,7 @@ export default function QRLanding() {
             mesaId:     mesaData.id,
             mesaNumero: mesaData.numero,
             comercioId: mesaData.comercio_id,
+            garzonNombre: mesaData.garzon_nombre,
           },
         });
       }, 1500);
@@ -126,6 +152,7 @@ export default function QRLanding() {
             mesaId:     mesaData.id,
             mesaNumero: mesaData.numero,
             comercioId: mesaData.comercio_id,
+            garzonNombre: mesaData.garzon_nombre,
           },
         });
       }, 1500);
@@ -230,13 +257,13 @@ export default function QRLanding() {
 
             <p className={styles.mesasLabel}>Mesas disponibles</p>
             <div className={styles.mesaGrid}>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+              {mesasDisponibles.map((mesaDisponible) => (
                 <button
-                  key={n}
-                  className={`${styles.mesaChip} ${parseInt(mesa) === n ? styles.mesaChipSelected : ""}`}
-                  onClick={() => handleSeleccionarMesa(n)}
+                  key={mesaDisponible.id}
+                  className={`${styles.mesaChip} ${parseInt(mesa) === mesaDisponible.numero ? styles.mesaChipSelected : ""}`}
+                  onClick={() => handleSeleccionarMesa(mesaDisponible.numero)}
                 >
-                  {n}
+                  {mesaDisponible.numero}
                 </button>
               ))}
             </div>

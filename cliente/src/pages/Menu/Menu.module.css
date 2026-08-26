@@ -19,6 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
@@ -45,6 +46,12 @@
   margin-top: 0.1rem;
 }
 
+.headerGarzon {
+  font-size: 0.7rem;
+  color: var(--color-primary);
+  margin-top: 0.2rem;
+}
+
 .headerBadge {
   background: color-mix(in srgb, var(--color-primary) 15%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
@@ -53,6 +60,50 @@
   padding: 0.3rem 0.75rem;
   font-size: 0.72rem;
   font-weight: 500;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.ayudaGarzon {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ayudaGarzon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  border-color: var(--color-primary);
+}
+
+.ayudaGarzon:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 480px) {
+  .headerTop {
+    align-items: flex-start;
+  }
+
+  .headerActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ayudaGarzon {
+    font-size: 0.68rem;
+  }
 }
 
 /* ── Tabs de categorías ───────────────────────────────────── */

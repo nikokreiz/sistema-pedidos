@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./ResumenPedido.module.css";
-import { ITEMS_MENU } from "../../constants/menu";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatPrecio = (precio) =>
@@ -26,13 +25,6 @@ const METODOS_PAGO = [
     icono: "💵",
     estilo: styles.metodoEfectivo,
   },
-  {
-    id: "garzon",
-    nombre: "¡Necesito un garzón!",
-    desc: "Te enviamos a alguien de inmediato.",
-    icono: "🙋",
-    estilo: styles.metodoGarzon,
-  },
 ];
 
 export default function ResumenPedido() {
@@ -43,6 +35,7 @@ export default function ResumenPedido() {
     pedido: pedidoInicial = {},
     mesaId = "?",
     mesaNumero,
+    garzonNombre,
     items: itemsMenu = [],
   } = location.state || {};
 
@@ -91,6 +84,7 @@ export default function ResumenPedido() {
         pedido,
         mesaId,
         mesaNumero: numeroMesa,
+        garzonNombre,
         metodoPago,
         nota,
         total,

@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 import styles from "../Dashboard/Dashboard.module.css";
 import { mesasService } from "../../services/mesasService";
 import { qrService } from "../../services/qrService";
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
 
 export default function MesasManagement({ admin }) {
   const [mesas, setMesas] = useState([]);
@@ -16,6 +19,18 @@ export default function MesasManagement({ admin }) {
   useEffect(() => {
     cargarMesas();
   }, [admin.comercioId]);
+
+  useEffect(() => {
+    const socket = io(SOCKET_URL);
+    socket.on("mesa_estado_actualizado", (mesaActualizada) => {
+      setMesas((mesasActuales) => mesasActuales.map((mesa) =>
+        mesa.id === mesaActualizada.id
+          ? { ...mesa, estado: mesaActualizada.estado }
+          : mesa
+      ));
+    });
+    return () => socket.disconnect();
+  }, []);
 
   const cargarMesas = async () => {
     setCargando(true);
@@ -189,6 +204,21 @@ export default function MesasManagement({ admin }) {
                   <div>
                     <div style={{ fontWeight: "600", color: "var(--color-text)" }}>
                       Mesa #{mesa.numero}
+                    </div>
+                    <div
+                      style={{
+                        display: "inline-block",
+                        marginTop: "0.35rem",
+                        padding: "0.2rem 0.55rem",
+                        borderRadius: "var(--radius-full)",
+                        background: mesa.estado === "ocupada" ? "color-mix(in srgb, var(--color-primary) 15%, transparent)" : "var(--color-bg)",
+                        border: `1px solid ${mesa.estado === "ocupada" ? "var(--color-primary)" : "var(--color-border)"}`,
+                        color: mesa.estado === "ocupada" ? "var(--color-primary)" : "var(--color-text-muted)",
+                        fontSize: "0.72rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {mesa.estado === "ocupada" ? "Ocupada" : "Libre"}
                     </div>
                     <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
                       Capacidad: {mesa.capacidad} personas

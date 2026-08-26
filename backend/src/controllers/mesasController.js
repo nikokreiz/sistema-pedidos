@@ -24,9 +24,11 @@ const verificarMesa = async (req, res, next) => {
     const { qrCodigo } = req.params;
 
     const result = await pool.query(
-      `SELECT m.id, m.numero, m.estado, s.comercio_id
+      `SELECT m.id, m.numero, m.estado, s.comercio_id, g.nombre AS garzon_nombre
        FROM mesas m
        JOIN sucursales s ON m.sucursal_id = s.id
+      LEFT JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.activo = true
+      LEFT JOIN garzones g ON g.id = ag.garzon_id AND g.activo = true
        WHERE m.qr_codigo = $1 AND m.activa = true`,
       [qrCodigo]
     );
@@ -46,9 +48,11 @@ const verificarMesaPorQR = async (req, res, next) => {
     const { qrCode } = req.params;
 
     const result = await pool.query(
-      `SELECT m.id, m.numero, m.sucursal_id, s.comercio_id
+      `SELECT m.id, m.numero, m.sucursal_id, s.comercio_id, g.nombre AS garzon_nombre
        FROM mesas m
        JOIN sucursales s ON m.sucursal_id = s.id
+      LEFT JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.activo = true
+      LEFT JOIN garzones g ON g.id = ag.garzon_id AND g.activo = true
        WHERE m.qr_codigo_unico = $1 AND m.activa = true
        LIMIT 1`,
       [qrCode]
@@ -69,9 +73,11 @@ const verificarMesaPorNumero = async (req, res, next) => {
     const { numero } = req.params;
 
     const result = await pool.query(
-      `SELECT m.id, m.numero, m.sucursal_id, s.comercio_id
+      `SELECT m.id, m.numero, m.sucursal_id, s.comercio_id, g.nombre AS garzon_nombre
        FROM mesas m
        JOIN sucursales s ON m.sucursal_id = s.id
+      LEFT JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.activo = true
+      LEFT JOIN garzones g ON g.id = ag.garzon_id AND g.activo = true
        WHERE m.numero = $1 AND m.activa = true
        LIMIT 1`,
       [numero]
@@ -82,6 +88,38 @@ const verificarMesaPorNumero = async (req, res, next) => {
     }
 
     res.json({ ok: true, mesa: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const solicitarGarzon = async (req, res, next) => {
+  try {
+    const { mesaId } = req.params;
+    const result = await pool.query(
+      `SELECT m.numero, s.comercio_id, g.id AS garzon_id, g.nombre AS garzon_nombre
+       FROM mesas m
+       JOIN sucursales s ON s.id = m.sucursal_id
+       LEFT JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.activo = true
+       LEFT JOIN garzones g ON g.id = ag.garzon_id AND g.activo = true
+       WHERE m.id = $1 AND m.activa = true
+       LIMIT 1`,
+      [mesaId]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Mesa no encontrada" });
+    const mesa = result.rows[0];
+    if (!mesa.garzon_id) return res.status(400).json({ ok: false, mensaje: "Esta mesa no tiene un garzón asignado" });
+
+    req.app.get("io").emit("solicitud_garzon", {
+      garzonId: mesa.garzon_id,
+      garzonNombre: mesa.garzon_nombre,
+      mesaId,
+      mesaNumero: mesa.numero,
+      comercioId: mesa.comercio_id,
+      timestamp: new Date(),
+    });
+    res.json({ ok: true, mensaje: "Solicitud enviada", garzonNombre: mesa.garzon_nombre });
   } catch (err) {
     next(err);
   }
@@ -209,4 +247,4 @@ const obtenerMesasPorSucursal = async (req, res, next) => {
   }
 };
 
-module.exports = { getMesas, verificarMesa, verificarMesaPorQR, verificarMesaPorNumero, crearMesa, actualizarMesa, eliminarMesa, obtenerMesasPorSucursal };
+module.exports = { getMesas, verificarMesa, verificarMesaPorQR, verificarMesaPorNumero, solicitarGarzon, crearMesa, actualizarMesa, eliminarMesa, obtenerMesasPorSucursal };

@@ -5,11 +5,11 @@ const getMesasGarzon = async (req, res, next) => {
     const { garzonId } = req.params;
 
     const result = await pool.query(
-      `SELECT m.id, m.numero, p.id AS pedido_id,
+      `SELECT m.id, m.numero, m.estado AS estado_mesa, p.id AS pedido_id,
               CASE 
                 WHEN p.estado = 'listo' THEN 'lista'
                 WHEN p.id IS NOT NULL THEN 'ocupada'
-                ELSE 'disponible'
+                ELSE m.estado
               END AS estado,
               COALESCE(
                 (SELECT json_agg(json_build_object('nombre', im.nombre, 'cantidad', ip.cantidad))
@@ -21,7 +21,8 @@ const getMesasGarzon = async (req, res, next) => {
                 '[]'::json
               ) AS items
       FROM mesas m
-      JOIN garzones g ON g.sucursal_id = m.sucursal_id AND g.id = $1
+      JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.garzon_id = $1 AND ag.activo = true
+      JOIN garzones g ON g.id = ag.garzon_id AND g.activo = true
        LEFT JOIN pedidos p ON p.mesa_id = m.id AND p.estado NOT IN ('pagado', 'entregado')
       WHERE m.activa = true
       GROUP BY m.id, m.numero, p.id, p.estado
@@ -39,6 +40,17 @@ const llamarAuxilio = async (req, res, next) => {
   try {
     const { mesaId } = req.params;
 
+    const mesaResult = await pool.query(
+      `SELECT m.numero, s.comercio_id, g.nombre AS garzon_nombre
+       FROM mesas m
+       JOIN sucursales s ON s.id = m.sucursal_id
+       LEFT JOIN asignaciones_garzon ag ON ag.mesa_id = m.id AND ag.activo = true
+       LEFT JOIN garzones g ON g.id = ag.garzon_id AND g.activo = true
+      WHERE m.id = $1
+       LIMIT 1`,
+          [mesaId]
+    );
+
     await pool.query(
       `INSERT INTO notificaciones (mesa_id, tipo, mensaje)
        VALUES ($1, 'auxilio', 'Garzon solicita auxilio en mesa')`,
@@ -46,9 +58,47 @@ const llamarAuxilio = async (req, res, next) => {
     );
 
     const io = req.app.get("io");
-    io.emit("auxilio_mesa", { mesaId, timestamp: new Date() });
+    const mesa = mesaResult.rows[0];
+    io.emit("auxilio_mesa", {
+      mesaId,
+      mesaNumero: mesa?.numero,
+      garzonNombre: mesa?.garzon_nombre || "Garzón",
+      comercioId: mesa?.comercio_id,
+      timestamp: new Date(),
+    });
 
     res.json({ ok: true, mensaje: "Auxilio enviado" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const actualizarEstadoMesa = async (req, res, next) => {
+  try {
+    const { mesaId } = req.params;
+    const { estado } = req.body;
+    const estadosValidos = ["disponible", "ocupada"];
+
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ ok: false, mensaje: "Estado de mesa no válido" });
+    }
+
+    const result = await pool.query(
+      `UPDATE mesas m
+       SET estado = $1
+       FROM asignaciones_garzon ag
+       WHERE m.id = $2 AND ag.mesa_id = m.id AND ag.garzon_id = $3
+         AND ag.activo = true AND m.activa = true
+       RETURNING m.id, m.numero, m.estado`,
+      [estado, mesaId, req.body.garzonId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(403).json({ ok: false, mensaje: "La mesa no está asignada a este garzón" });
+    }
+
+    req.app.get("io").emit("mesa_estado_actualizado", result.rows[0]);
+    res.json({ ok: true, mesa: result.rows[0] });
   } catch (err) {
     next(err);
   }
@@ -97,4 +147,4 @@ const marcarEntregado = async (req, res, next) => {
   }
 };
 
-module.exports = { getMesasGarzon, llamarAuxilio, marcarEntregado };
+module.exports = { getMesasGarzon, llamarAuxilio, actualizarEstadoMesa, marcarEntregado };

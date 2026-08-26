@@ -99,7 +99,7 @@ export default function Cocina() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <div>
-            <p className={styles.titulo}>Pantalla Cocina</p>
+            <p className={styles.titulo}>Pantalla Cocina y Barra</p>
             <p className={styles.subtitulo}>La Barra del Puerto</p>
           </div>
         </div>

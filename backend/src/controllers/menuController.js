@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const crypto = require("crypto");
 
 const getMenu = async (req, res, next) => {
   try {
@@ -27,6 +28,46 @@ const getMenu = async (req, res, next) => {
     );
 
     res.json({ ok: true, categorias: result.rows });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const crearCategoria = async (req, res, next) => {
+  try {
+    const { comercioId, nombre, icono } = req.body;
+
+    if (!comercioId || !nombre || !nombre.trim()) {
+      return res.status(400).json({ ok: false, mensaje: "Comercio y nombre de categoría requeridos" });
+    }
+
+    const categoriaExistente = await pool.query(
+      `SELECT id FROM categorias_menu
+       WHERE comercio_id = $1 AND LOWER(nombre) = LOWER($2)
+       LIMIT 1`,
+      [comercioId, nombre.trim()]
+    );
+
+    if (categoriaExistente.rows.length > 0) {
+      return res.status(400).json({ ok: false, mensaje: "Ya existe una categoría con ese nombre" });
+    }
+
+    const ultimaCategoria = await pool.query(
+      `SELECT COALESCE(MAX(orden), 0) AS ultimo_orden
+       FROM categorias_menu
+       WHERE comercio_id = $1`,
+      [comercioId]
+    );
+    const orden = Number(ultimaCategoria.rows[0].ultimo_orden) + 1;
+
+    const result = await pool.query(
+      `INSERT INTO categorias_menu (id, comercio_id, nombre, icono, orden)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, comercio_id, nombre, icono, orden`,
+      [crypto.randomUUID(), comercioId, nombre.trim(), icono?.trim() || "", orden]
+    );
+
+    res.status(201).json({ ok: true, categoria: result.rows[0] });
   } catch (err) {
     next(err);
   }
@@ -95,4 +136,4 @@ const eliminarItem = async (req, res, next) => {
   }
 };
 
-module.exports = { getMenu, crearItem, actualizarItem, eliminarItem };
+module.exports = { getMenu, crearCategoria, crearItem, actualizarItem, eliminarItem };

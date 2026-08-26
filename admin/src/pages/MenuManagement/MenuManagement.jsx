@@ -25,6 +25,7 @@ export default function MenuManagement({ admin }) {
     precio: "",
     imagenUrl: "",
   });
+  const [formCategoria, setFormCategoria] = useState({ nombre: "" });
 
   useEffect(() => {
     cargarMenu();
@@ -44,6 +45,23 @@ export default function MenuManagement({ admin }) {
 
   const resetFormNuevo = () => {
     setFormNuevo({ nombre: "", descripcion: "", precio: "", imagenUrl: "" });
+  };
+
+  const handleCrearCategoria = async (e) => {
+    e.preventDefault();
+    if (!formCategoria.nombre.trim()) {
+      alert("El nombre de la categoría es requerido");
+      return;
+    }
+
+    try {
+      await menuService.crearCategoria(admin.comercioId, formCategoria.nombre);
+      setFormCategoria({ nombre: "" });
+      await cargarMenu();
+      alert("Categoría creada correctamente");
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   };
 
   const handleArchivoSeleccionado = async (event, setter) => {
@@ -116,6 +134,34 @@ export default function MenuManagement({ admin }) {
   return (
     <div className={styles.seccion}>
       <h2 className={styles.seccionTitulo}>Gestión de Menú</h2>
+
+      <form
+        onSubmit={handleCrearCategoria}
+        className={`${styles.card} ${styles.categoriaForm}`}
+      >
+        <div className={styles.cardHeader}>
+          <span className={styles.cardTitulo}>Nueva categoría</span>
+        </div>
+        <div className={styles.cardContent}>
+          <div className={styles.categoriaCampos}>
+            <div className={styles.inputGrupo}>
+            <label className={styles.label}>Nombre</label>
+            <input
+              className={styles.input}
+              placeholder="Ej.: Tragos o Picoteo"
+              value={formCategoria.nombre}
+              onChange={(e) => setFormCategoria({ ...formCategoria, nombre: e.target.value })}
+            />
+            </div>
+            <button
+              type="submit"
+              className={styles.btnCategoria}
+            >
+              + Agregar categoría
+            </button>
+          </div>
+        </div>
+      </form>
 
       {categorias.map((cat) => (
         <div key={cat.id} className={styles.card} style={{ marginBottom: "2rem" }}>

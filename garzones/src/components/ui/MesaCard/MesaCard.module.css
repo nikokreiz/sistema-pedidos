@@ -13,6 +13,10 @@
   border-top: 3px solid var(--color-primary);
 }
 
+.cardDisponible {
+  border-top: 3px solid var(--color-border-2);
+}
+
 .cardLista {
   border-top: 3px solid var(--color-success);
   background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
@@ -49,6 +53,12 @@
   background: color-mix(in srgb, var(--color-primary) 15%, transparent);
   color: var(--color-primary);
   border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.badgeDisponible {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
 }
 
 .badgeLista {
@@ -132,6 +142,24 @@
   color: #fff;
 }
 .btnEntregado:hover { background: #059669; }
+
+.btnOcupada {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btnOcupada:hover { background: #2563EB; }
+
+.btnLibre {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.btnLibre:hover {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
 
 .btnDeshabilitado {
   background: var(--color-surface-2);

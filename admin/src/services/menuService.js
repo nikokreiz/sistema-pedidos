@@ -5,6 +5,11 @@ const getMenu = async (comercioId) => {
   return data.categorias;
 };
 
+const crearCategoria = async (comercioId, nombre, icono) => {
+  const data = await api.post("/menu/categorias", { comercioId, nombre, icono });
+  return data.categoria;
+};
+
 const crearItem = async (categoriaId, nombre, descripcion, precio, imagenUrl) => {
   const data = await api.post("/menu/items", {
     categoriaId,
@@ -32,4 +37,4 @@ const eliminarItem = async (itemId) => {
   return data;
 };
 
-export const menuService = { getMenu, crearItem, actualizarItem, eliminarItem };
+export const menuService = { getMenu, crearCategoria, crearItem, actualizarItem, eliminarItem };

@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const crypto = require("crypto");
 
 const loginAdmin = async (req, res, next) => {
   try {
@@ -124,13 +125,13 @@ const getEstadisticasHoy = async (req, res, next) => {
       [comercioId]
     );
 
-    // Mesas ocupadas ahora
+    // Estado manual actual de las mesas
     const mesasResult = await pool.query(
-      `SELECT COUNT(DISTINCT m.id) as mesas_ocupadas
+      `SELECT COUNT(*) FILTER (WHERE m.estado = 'ocupada') AS mesas_ocupadas,
+              COUNT(*) FILTER (WHERE m.estado = 'disponible') AS mesas_libres
        FROM mesas m
        JOIN sucursales s ON m.sucursal_id = s.id
-       LEFT JOIN pedidos p ON p.mesa_id = m.id AND p.estado NOT IN ('entregado', 'pagado')
-       WHERE s.comercio_id = $1 AND p.id IS NOT NULL`,
+       WHERE s.comercio_id = $1 AND m.activa = true`,
       [comercioId]
     );
 
@@ -142,10 +143,131 @@ const getEstadisticasHoy = async (req, res, next) => {
       totalPedidos: parseInt(pedidos.total_pedidos) || 0,
       ingresos: parseFloat(pedidos.ingresos) || 0,
       mesasOcupadas: parseInt(mesas.mesas_ocupadas) || 0,
+      mesasLibres: parseInt(mesas.mesas_libres) || 0,
     });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { loginAdmin, getHorarios, actualizarHorario, verificarLocalAbierto, getEstadisticasHoy };
+const getGarzones = async (req, res, next) => {
+  try {
+    const { comercioId } = req.params;
+    const result = await pool.query(
+      `SELECT g.id, g.nombre, g.email, g.sucursal_id, g.activo,
+              COALESCE(
+                json_agg(json_build_object('id', m.id, 'numero', m.numero)
+                ORDER BY m.numero) FILTER (WHERE m.id IS NOT NULL),
+                '[]'::json
+              ) AS mesas
+       FROM garzones g
+       JOIN sucursales s ON s.id = g.sucursal_id
+       LEFT JOIN asignaciones_garzon ag ON ag.garzon_id = g.id AND ag.activo = true
+       LEFT JOIN mesas m ON m.id = ag.mesa_id AND m.activa = true
+       WHERE s.comercio_id = $1
+       GROUP BY g.id
+       ORDER BY g.nombre ASC`,
+      [comercioId]
+    );
+    res.json({ ok: true, garzones: result.rows });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const crearGarzon = async (req, res, next) => {
+  try {
+    const { nombre, email, password, sucursalId } = req.body;
+    if (!nombre?.trim() || !email?.trim() || !password || !sucursalId) {
+      return res.status(400).json({ ok: false, mensaje: "Nombre, email, contraseña y sucursal son requeridos" });
+    }
+
+    const existente = await pool.query("SELECT id FROM garzones WHERE LOWER(email) = LOWER($1) LIMIT 1", [email.trim()]);
+    if (existente.rows.length > 0) {
+      return res.status(400).json({ ok: false, mensaje: "Ya existe un garzón con ese email" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO garzones (id, nombre, email, password_hash, sucursal_id, activo)
+       VALUES ($1, $2, $3, $4, $5, true)
+       RETURNING id, nombre, email, sucursal_id, activo`,
+      [crypto.randomUUID(), nombre.trim(), email.trim(), password, sucursalId]
+    );
+    res.status(201).json({ ok: true, garzon: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const actualizarGarzon = async (req, res, next) => {
+  try {
+    const { garzonId } = req.params;
+    const { nombre, email, password, activo } = req.body;
+    const result = await pool.query(
+      `UPDATE garzones
+       SET nombre = $1, email = $2, activo = $3,
+           password_hash = CASE WHEN NULLIF($4, '') IS NULL THEN password_hash ELSE $4 END
+       WHERE id = $5
+       RETURNING id, nombre, email, sucursal_id, activo`,
+      [nombre?.trim(), email?.trim(), activo !== false, password || "", garzonId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Garzón no encontrado" });
+    res.json({ ok: true, garzon: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const eliminarGarzon = async (req, res, next) => {
+  try {
+    const { garzonId } = req.params;
+    const result = await pool.query(
+      `UPDATE garzones SET activo = false WHERE id = $1 RETURNING id`,
+      [garzonId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Garzón no encontrado" });
+    await pool.query("UPDATE asignaciones_garzon SET activo = false WHERE garzon_id = $1", [garzonId]);
+    res.json({ ok: true, mensaje: "Garzón desactivado" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const asignarMesaAGarzon = async (req, res, next) => {
+  try {
+    const { garzonId, mesaId } = req.body;
+    if (!garzonId || !mesaId) return res.status(400).json({ ok: false, mensaje: "Garzón y mesa son requeridos" });
+
+    const validacion = await pool.query(
+      `SELECT 1
+       FROM garzones g
+       JOIN mesas m ON m.sucursal_id = g.sucursal_id
+       WHERE g.id = $1 AND m.id = $2 AND g.activo = true AND m.activa = true`,
+      [garzonId, mesaId]
+    );
+    if (validacion.rows.length === 0) return res.status(400).json({ ok: false, mensaje: "Garzón y mesa no pertenecen a la misma sucursal" });
+
+    await pool.query("UPDATE asignaciones_garzon SET activo = false WHERE mesa_id = $1 AND activo = true", [mesaId]);
+    const result = await pool.query(
+      `INSERT INTO asignaciones_garzon (garzon_id, mesa_id, activo)
+       VALUES ($1, $2, true)
+       RETURNING garzon_id, mesa_id, activo`,
+      [garzonId, mesaId]
+    );
+    res.json({ ok: true, asignacion: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const desasignarMesa = async (req, res, next) => {
+  try {
+    const { mesaId } = req.params;
+    await pool.query("UPDATE asignaciones_garzon SET activo = false WHERE mesa_id = $1 AND activo = true", [mesaId]);
+    res.json({ ok: true, mensaje: "Mesa desasignada" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { loginAdmin, getHorarios, actualizarHorario, verificarLocalAbierto, getEstadisticasHoy, getGarzones, crearGarzon, actualizarGarzon, eliminarGarzon, asignarMesaAGarzon, desasignarMesa };

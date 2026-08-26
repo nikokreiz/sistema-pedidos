@@ -12,7 +12,7 @@ function App() {
 
   // Restaura sesión desde localStorage
   useEffect(() => {
-    const garzonGuardado = localStorage.getItem("garzon");
+    const garzonGuardado = sessionStorage.getItem("garzon");
     if (garzonGuardado) {
       setGarzon(JSON.parse(garzonGuardado));
     }
@@ -47,12 +47,12 @@ function App() {
 
   const handleLogin = (garzonData) => {
     setGarzon(garzonData);
-    localStorage.setItem("garzon", JSON.stringify(garzonData));
+    sessionStorage.setItem("garzon", JSON.stringify(garzonData));
   };
 
   const handleLogout = () => {
     setGarzon(null);
-    localStorage.removeItem("garzon");
+    sessionStorage.removeItem("garzon");
   };
 
   return garzon ? (

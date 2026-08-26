@@ -9,7 +9,7 @@ export default function Menu() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { mesaId, comercioId } = location.state || {};
+  const { mesaId, comercioId, garzonNombre } = location.state || {};
   const mesaNumero = Number(mesaNumeroParam ?? location.state?.mesaNumero ?? mesaId ?? 0);
 
   const [categorias, setCategorias] = useState([]);
@@ -18,6 +18,23 @@ export default function Menu() {
   const [error, setError] = useState("");
   const [itemsMenu, setItemsMenu] = useState({});
   const [categoriaActiva, setCategoriaActiva] = useState("");
+  const [solicitandoGarzon, setSolicitandoGarzon] = useState(false);
+
+  const solicitarGarzon = async () => {
+    if (solicitandoGarzon) return;
+    setSolicitandoGarzon(true);
+    try {
+      const mesaActual = mesaId
+        ? { id: mesaId }
+        : await mesaService.verificarMesaPorNumero(mesaNumero);
+      const respuesta = await mesaService.solicitarGarzon(mesaActual.id);
+      alert(`Solicitud enviada a ${respuesta.garzonNombre}.`);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSolicitandoGarzon(false);
+    }
+  };
 
   useEffect(() => {
     if (!comercioId) {
@@ -100,6 +117,7 @@ export default function Menu() {
         mesaId,
         mesaNumero,
         comercioId,
+        garzonNombre,
       },
     });
   };
@@ -142,13 +160,18 @@ export default function Menu() {
       <div className={styles.header}>
         <div className={styles.headerTop}>
           <div className={styles.headerInfo}>
-            <div className={styles.headerLogo}>🍽️</div>
             <div>
               <p className={styles.headerNombre}>Menú</p>
               <p className={styles.headerMesa}>Mesa #{mesaNumero || mesaId || "?"}</p>
+              {garzonNombre && <p className={styles.headerGarzon}>Atiende: {garzonNombre}</p>}
             </div>
           </div>
-          <span className={styles.headerBadge}>{totalItemsEnPedido} en pedido</span>
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.ayudaGarzon} onClick={solicitarGarzon} disabled={solicitandoGarzon}>
+              {solicitandoGarzon ? "Enviando..." : "🔔 Llamar garzón"}
+            </button>
+            <span className={styles.headerBadge}>{totalItemsEnPedido} en pedido</span>
+          </div>
         </div>
 
         {categorias.length > 0 && (
